@@ -1,0 +1,32 @@
+asyncapi: 3.0.0
+info:
+  title: Ping Service
+  version: 1.0.0
+servers:
+  production:
+    host: ping.example.com
+    protocol: wss
+channels:
+  ping:
+    address: /ping
+    bindings:
+      ws: {}
+    messages:
+      pingMessage:
+        summary: A ping message
+        payload:
+          type: object
+          properties:
+            timestamp:
+              type: number
+        examples:
+          - name: samplePing
+            payload:
+              timestamp: 1735689600
+operations:
+  sendPing:
+    action: send
+    channel:
+      $ref: '#/channels/ping'
+    messages:
+      - $ref: '#/channels/ping/messages/pingMessage'

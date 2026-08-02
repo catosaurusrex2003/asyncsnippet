@@ -1,0 +1,47 @@
+asyncapi: 3.0.0
+info:
+  title: Trading Service
+  version: 1.0.0
+servers:
+  production:
+    host: trading.example.com
+    protocol: wss
+channels:
+  orders:
+    address: /orders
+    bindings:
+      ws: {}
+    messages:
+      placeOrder:
+        summary: Place a new order
+        payload:
+          type: object
+          properties:
+            symbol:
+              type: string
+            quantity:
+              type: number
+        examples:
+          - name: samplePlaceOrder
+            payload:
+              symbol: 'ACME'
+              quantity: 10
+      cancelOrder:
+        summary: Cancel an existing order
+        payload:
+          type: object
+          properties:
+            orderId:
+              type: string
+        examples:
+          - name: sampleCancelOrder
+            payload:
+              orderId: 'ord_123'
+operations:
+  sendOrderCommand:
+    action: send
+    channel:
+      $ref: '#/channels/orders'
+    messages:
+      - $ref: '#/channels/orders/messages/placeOrder'
+      - $ref: '#/channels/orders/messages/cancelOrder'

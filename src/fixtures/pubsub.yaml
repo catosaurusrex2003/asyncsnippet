@@ -1,0 +1,62 @@
+asyncapi: 3.0.0
+info:
+  title: Alerts Service
+  version: 1.0.0
+servers:
+  production:
+    host: alerts.example.com
+    protocol: wss
+channels:
+  alerts:
+    address: /alerts
+    bindings:
+      ws:
+        query:
+          type: object
+          properties:
+            region:
+              type: string
+    messages:
+      alertMessage:
+        summary: An alert notification
+        payload:
+          type: object
+          properties:
+            severity:
+              type: string
+            message:
+              type: string
+        examples:
+          - name: sampleAlert
+            payload:
+              severity: 'high'
+              message: 'disk usage above threshold'
+  heartbeat:
+    address: /heartbeat
+    bindings:
+      ws: {}
+    messages:
+      heartbeatMessage:
+        summary: A heartbeat ping
+        payload:
+          type: object
+          properties:
+            ok:
+              type: boolean
+        examples:
+          - name: sampleHeartbeat
+            payload:
+              ok: true
+operations:
+  subscribeToAlerts:
+    action: receive
+    channel:
+      $ref: '#/channels/alerts'
+    messages:
+      - $ref: '#/channels/alerts/messages/alertMessage'
+  sendHeartbeat:
+    action: send
+    channel:
+      $ref: '#/channels/heartbeat'
+    messages:
+      - $ref: '#/channels/heartbeat/messages/heartbeatMessage'

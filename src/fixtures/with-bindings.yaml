@@ -1,0 +1,52 @@
+asyncapi: 3.0.0
+info:
+  title: Chat Service
+  version: 1.0.0
+servers:
+  production:
+    host: chat.example.com
+    protocol: wss
+channels:
+  chatRoom:
+    address: '/rooms/{roomId}'
+    parameters:
+      roomId:
+        description: The chat room id
+        default: general
+    bindings:
+      ws:
+        query:
+          type: object
+          properties:
+            token:
+              type: string
+              examples:
+                - abc123token
+        headers:
+          type: object
+          properties:
+            X-Client-Version:
+              type: string
+              default: '1.0'
+    messages:
+      chatMessage:
+        summary: A chat message
+        payload:
+          type: object
+          properties:
+            text:
+              type: string
+            from:
+              type: string
+        examples:
+          - name: sampleMessage
+            payload:
+              text: 'hello world'
+              from: 'alice'
+operations:
+  sendMessage:
+    action: send
+    channel:
+      $ref: '#/channels/chatRoom'
+    messages:
+      - $ref: '#/channels/chatRoom/messages/chatMessage'

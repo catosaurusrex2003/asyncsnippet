@@ -1,0 +1,92 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`fixtures (snapshot) > multi-message.yaml — operation with multiple messages uses the first message 1`] = `
+"import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://trading.example.com/orders');
+
+socket.on('open', () => {
+  socket.send(JSON.stringify({
+    "symbol": "ACME",
+    "quantity": 10
+  }));
+});
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
+
+exports[`fixtures (snapshot) > pubsub.yaml — receive-only operation has no send call, shows example as a comment, and flags the unresolved query param 1`] = `
+"// NOTE: some values could not be resolved from the AsyncAPI document's
+// default/examples and were filled with a placeholder — replace them
+// with real values before running this snippet:
+//   - query param "region"
+
+import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://alerts.example.com/alerts?region=%3Cregion%3E');
+
+// Example message shape for this operation ("sampleAlert"):
+// {
+//   "severity": "high",
+//   "message": "disk usage above threshold"
+// }
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
+
+exports[`fixtures (snapshot) > pubsub.yaml — send operation 1`] = `
+"import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://alerts.example.com/heartbeat');
+
+socket.on('open', () => {
+  socket.send(JSON.stringify({
+    "ok": true
+  }));
+});
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
+
+exports[`fixtures (snapshot) > simple.yaml — send-only, no bindings, no channel parameters 1`] = `
+"import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://ping.example.com/ping');
+
+socket.on('open', () => {
+  socket.send(JSON.stringify({
+    "timestamp": 1735689600
+  }));
+});
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
+
+exports[`fixtures (snapshot) > with-bindings.yaml — query param, header, and channel parameter all resolve 1`] = `
+"import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://chat.example.com/rooms/general?token=abc123token', {
+  headers: {
+    'X-Client-Version': '1.0'
+  },
+});
+
+socket.on('open', () => {
+  socket.send(JSON.stringify({
+    "text": "hello world",
+    "from": "alice"
+  }));
+});
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
