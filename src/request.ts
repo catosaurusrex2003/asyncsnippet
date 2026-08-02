@@ -1,4 +1,4 @@
-import type { AsyncAPIDocumentInterface } from "@asyncapi/parser";
+import type { AsyncApiDocument, Channel, Message, Server } from "./asyncapi-types.js";
 
 import {
   MissingBindingError,
@@ -6,11 +6,8 @@ import {
   MissingExampleError,
   UnknownOperationError,
 } from "./errors.js";
-import {
-  resolveRawObjectSchema,
-  resolveSchemaField,
-  type RawObjectSchema,
-} from "./helpers/schema-value.js";
+import { deref } from "./helpers/deref.js";
+import { resolveRawObjectSchema, resolveSchemaField } from "./helpers/schema-value.js";
 
 export interface Request {
   operationId: string;
@@ -38,47 +35,53 @@ export interface Request {
  * Normalizes an AsyncAPI 3.x operation into the internal `Request` shape —
  * the AsyncAPI equivalent of httpsnippet's HAR-derived `Request`.
  */
-export function buildRequest(document: AsyncAPIDocumentInterface, operationId: string): Request {
-  const operation = document.operations().get(operationId);
+export function buildRequest(document: AsyncApiDocument, operationId: string): Request {
+  const operationOrRef = document.operations?.[operationId];
+  const operation = operationOrRef && deref(document, operationOrRef);
   if (!operation) {
     throw new UnknownOperationError(operationId);
   }
 
-  const channels = [...operation.channels()];
-  const channel = channels[0];
+  const channel = deref<Channel>(document, operation.channel);
   if (!channel) {
     throw new MissingChannelError(operationId);
   }
 
-  const wsBinding = channel.bindings().get("ws");
+  const wsBinding = channel.bindings?.ws;
   if (!wsBinding) {
     throw new MissingBindingError(operationId);
   }
-  const bindingValue = wsBinding.value() as { query?: RawObjectSchema; headers?: RawObjectSchema };
 
   const placeholders: string[] = [];
 
-  const query = resolveRawObjectSchema(bindingValue.query);
-  const headers = resolveRawObjectSchema(bindingValue.headers);
+  const query = resolveRawObjectSchema(wsBinding.query);
+  const headers = resolveRawObjectSchema(wsBinding.headers);
   placeholders.push(...query.placeholders.map((name) => `query param "${name}"`));
   placeholders.push(...headers.placeholders.map((name) => `header "${name}"`));
 
-  let channelAddress = channel.address() ?? "";
-  for (const param of channel.parameters()) {
-    const resolved = resolveSchemaField(param.schema(), param.id());
-    channelAddress = channelAddress.replace(`{${param.id()}}`, resolved.value);
+  let channelAddress = channel.address ?? "";
+  for (const [paramId, param] of Object.entries(channel.parameters ?? {})) {
+    const resolved = resolveSchemaField(param, paramId);
+    channelAddress = channelAddress.replace(`{${paramId}}`, resolved.value);
     if (resolved.isPlaceholder) {
-      placeholders.push(`channel parameter "${param.id()}"`);
+      placeholders.push(`channel parameter "${paramId}"`);
     }
   }
 
-  const servers = [...operation.servers()];
-  const server = servers[0];
-  const serverUrl = server ? server.url() : "";
+  const serverRefs = operation.servers ?? channel.servers;
+  const server = serverRefs
+    ? deref<Server>(document, serverRefs[0])
+    : deref<Server>(document, Object.values(document.servers ?? {})[0]);
+  const serverUrl = server ? `${server.protocol}://${server.host}${server.pathname ?? ""}` : "";
 
-  const messages = [...operation.messages()];
+  // Operation.messages is optional: omitting it means all channel messages apply
+  // (AsyncAPI 3.x). An explicit `[]` means no messages.
+  const messages =
+    operation.messages !== undefined
+      ? operation.messages.map((ref) => deref<Message>(document, ref))
+      : Object.values(channel.messages ?? {}).map((msg) => deref<Message>(document, msg));
   const message = messages[0];
-  const examples = message ? [...message.examples()] : [];
+  const examples = message?.examples ?? [];
   const example = examples[0];
 
   if (!example) {
@@ -87,14 +90,14 @@ export function buildRequest(document: AsyncAPIDocumentInterface, operationId: s
 
   return {
     operationId,
-    action: operation.isSend() ? "send" : "receive",
+    action: operation.action === "send" ? "send" : "receive",
     serverUrl,
     channelAddress,
     query: query.values,
     headers: headers.values,
     message: {
-      name: example.name(),
-      payload: example.payload(),
+      name: example.name,
+      payload: example.payload,
     },
     placeholders,
   };

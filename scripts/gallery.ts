@@ -1,6 +1,12 @@
 // Live preview of every fixture x every registered target/client.
 // Run once:  npx tsx scripts/gallery.ts
 // Watch:     npx tsx watch scripts/gallery.ts   (reruns on any src/ or fixture change)
+import fs from "node:fs";
+
+import yaml from "js-yaml";
+
+import type { AsyncApiDocument } from "../src/asyncapi-types.js";
+
 import { AsyncSnippet } from "../src/index.js";
 import { targets } from "../src/targets/index.js";
 
@@ -13,7 +19,8 @@ const cases: { file: string; operationId: string }[] = [
 ];
 
 for (const { file, operationId } of cases) {
-  const snippet = await AsyncSnippet.fromFile(`./src/fixtures/${file}`);
+  const document = yaml.load(fs.readFileSync(`./src/fixtures/${file}`, "utf8")) as AsyncApiDocument;
+  const snippet = new AsyncSnippet(document);
 
   for (const [targetId, target] of Object.entries(targets)) {
     for (const clientId of Object.keys(target.clientsById)) {

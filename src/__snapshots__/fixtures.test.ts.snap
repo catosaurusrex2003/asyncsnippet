@@ -1,5 +1,21 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
+exports[`fixtures (snapshot) > channel-messages-only.yaml — omitted operation.messages falls back to channel messages 1`] = `
+"import WebSocket from 'ws';
+
+const socket = new WebSocket('wss://ping.example.com/ping');
+
+socket.on('open', () => {
+  socket.send(JSON.stringify({
+    "timestamp": 1735689600
+  }));
+});
+
+socket.on('message', (data) => {
+  console.log(data.toString());
+});"
+`;
+
 exports[`fixtures (snapshot) > multi-message.yaml — operation with multiple messages uses the first message 1`] = `
 "import WebSocket from 'ws';
 

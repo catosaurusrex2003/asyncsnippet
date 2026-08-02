@@ -12,11 +12,15 @@ npm install asyncsnippet
 
 ## Usage
 
+asyncsnippet does not parse or validate AsyncAPI documents itself — pass it an already-parsed document (a plain object; `$ref`s are resolved internally):
+
 ```js
+import fs from "node:fs";
+import yaml from "js-yaml";
 import { AsyncSnippet } from "asyncsnippet";
 
-const snippet = await AsyncSnippet.fromFile("./chat.asyncapi.yaml");
-// or: AsyncSnippet.fromURL(url) / AsyncSnippet.fromString(source)
+const document = yaml.load(fs.readFileSync("./chat.asyncapi.yaml", "utf8"));
+const snippet = new AsyncSnippet(document);
 
 console.log(snippet.convert("sendMessage", "javascript", "ws"));
 ```
@@ -64,7 +68,7 @@ Deliberately narrow — see the design doc for the full reasoning:
 - **JSON/text payloads only.** No binary encodings (Avro, Protobuf).
 - **No security schemes.** Only binding-level `query`/`headers` are resolved; AsyncAPI `security` objects are not.
 - **Single server.** Uses the first entry in the document's `servers` map.
-- **First message wins.** An operation with multiple `messages` (`oneOf`) uses the first one.
+- **First message wins.** An operation with multiple `messages` uses the first one. If `operation.messages` is omitted, all channel messages apply (AsyncAPI 3.x).
 - **Node.js + `ws`, not the browser.** The browser-native `WebSocket` API can't set custom handshake headers — `ws` can, and AsyncAPI WS bindings commonly need them.
 - **`targetId`/`clientId` are hardcoded** to `"javascript"`/`"ws"` for v1 — the four-argument `convert()` signature is forward-compatible with a future target/client plugin registry (mirroring [httpsnippet's](https://github.com/readmeio/httpsnippet) `targets/` architecture), but v1 does not implement one.
 

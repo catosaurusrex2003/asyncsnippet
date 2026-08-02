@@ -1,5 +1,3 @@
-import type { SchemaInterface } from "@asyncapi/parser";
-
 export interface ResolvedField {
   value: string;
   isPlaceholder: boolean;
@@ -25,15 +23,15 @@ function resolveValue(
   return { value: `<${placeholderLabel}>`, isPlaceholder: true };
 }
 
-/** Resolves a single parsed `SchemaInterface` (used for channel parameters). */
+/** Resolves a channel parameter's `default`/`examples` (raw AsyncAPI 3.x Parameter Object fields). */
 export function resolveSchemaField(
-  schema: SchemaInterface | undefined,
+  schema: { default?: unknown; examples?: unknown[] } | undefined,
   label: string,
 ): ResolvedField {
   if (!schema) {
     return { value: `<${label}>`, isPlaceholder: true };
   }
-  return resolveValue(schema.default(), schema.examples(), label);
+  return resolveValue(schema.default, schema.examples, label);
 }
 
 /** Raw JSON Schema shape as it appears in a binding's `query`/`headers` object (not a parsed model). */

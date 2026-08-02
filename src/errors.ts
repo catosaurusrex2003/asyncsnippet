@@ -5,13 +5,6 @@ export class AsyncSnippetError extends Error {
   }
 }
 
-export class InvalidDocumentError extends AsyncSnippetError {
-  constructor(reasons: string[]) {
-    super(`Invalid AsyncAPI document:\n${reasons.map((r) => `  - ${r}`).join("\n")}`);
-    this.name = "InvalidDocumentError";
-  }
-}
-
 export class UnknownOperationError extends AsyncSnippetError {
   constructor(operationId: string) {
     super(`No operation found with id "${operationId}"`);
