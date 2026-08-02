@@ -11,11 +11,11 @@
     "websocket",
     "ws"
   ],
-  "homepage": "https://github.com/catosaurusrex/asyncsnippet",
+  "homepage": "https://github.com/catosaurusrex2003/asyncsnippet",
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/catosaurusrex/asyncsnippet.git"
+    "url": "https://github.com/catosaurusrex2003/asyncsnippet.git"
   },
   "files": [
     "dist"
