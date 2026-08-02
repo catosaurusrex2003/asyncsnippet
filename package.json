@@ -1,6 +1,6 @@
 {
   "name": "asyncsnippet",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Code snippet generator for asynchronous protocol operations, using an AsyncAPI operation as the source of truth (WebSocket only for now)",
   "keywords": [
     "async",
