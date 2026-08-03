@@ -160,21 +160,3 @@ them as fast-follows:
   §1's CI exists), license badge. Cheap, standard, currently absent.
   **Effort: S. Priority: next.**
 
-## NOT in scope (raised and deliberately excluded)
-
-- Hosted "try it now" playground / SaaS product — the design doc's Premise
-  #4 explicitly scopes this as a library, not a hosted service. Revisit only
-  if the library gets real adoption and a platform wants to embed it as a
-  UI, not as a standalone product asyncsnippet builds itself.
-- Full project-scaffolding output (competing with `@asyncapi/generator`) —
-  explicitly the *not-this* in the design doc's Problem Statement. Don't
-  drift toward it even if a client feels "close" to a scaffolder.
-
----
-
-### Suggested next PR (if you want the highest-leverage single change)
-
-CI (§1) + the two doc bugs (§0, `InvalidDocumentError` + binding precedence)
-+ error-path tests (§0). All four are S-effort, all four are correctness/
-trust issues rather than new scope, and CI is what makes every subsequent
-item on this list safe to merge quickly.
