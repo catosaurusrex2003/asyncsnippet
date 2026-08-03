@@ -107,6 +107,129 @@ socket.on('message', (data) => {
 });"
 `;
 
+exports[`fixtures (snapshot) — go/gorilla > pubsub.yaml — receive-only operation loops over ReadMessage without writing 1`] = `
+"// NOTE: some values could not be resolved from the AsyncAPI document's
+// default/examples and were filled with a placeholder — replace them
+// with real values before running this snippet:
+//   - query param "region"
+
+package main
+
+import (
+	"log"
+
+	"github.com/gorilla/websocket"
+)
+
+func main() {
+	url := "wss://alerts.example.com/alerts?region=%3Cregion%3E"
+
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer conn.Close()
+
+	// Example message shape for this operation ("sampleAlert"):
+	// {
+	//   "severity": "high",
+	//   "message": "disk usage above threshold"
+	// }
+
+	for {
+		_, message, err := conn.ReadMessage()
+		if err != nil {
+			log.Println("read:", err)
+			return
+		}
+		log.Println(string(message))
+	}
+}"
+`;
+
+exports[`fixtures (snapshot) — go/gorilla > simple.yaml — send-only, no bindings 1`] = `
+"package main
+
+import (
+	"encoding/json"
+	"log"
+
+	"github.com/gorilla/websocket"
+)
+
+func main() {
+	url := "wss://ping.example.com/ping"
+
+	conn, _, err := websocket.DefaultDialer.Dial(url, nil)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer conn.Close()
+
+	payload := map[string]interface{}{
+		"timestamp": 1735689600,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatal("marshal:", err)
+	}
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+		log.Fatal("write:", err)
+	}
+
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		log.Fatal("read:", err)
+	}
+	log.Println(string(message))
+}"
+`;
+
+exports[`fixtures (snapshot) — go/gorilla > with-bindings.yaml — query param and header both resolve 1`] = `
+"package main
+
+import (
+	"encoding/json"
+	"log"
+	"net/http"
+
+	"github.com/gorilla/websocket"
+)
+
+func main() {
+	url := "wss://chat.example.com/rooms/general?token=abc123token"
+
+	header := http.Header{}
+	header.Set("X-Client-Version", "1.0")
+
+	conn, _, err := websocket.DefaultDialer.Dial(url, header)
+	if err != nil {
+		log.Fatal("dial:", err)
+	}
+	defer conn.Close()
+
+	payload := map[string]interface{}{
+		"text": "hello world",
+		"from": "alice",
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatal("marshal:", err)
+	}
+	if err := conn.WriteMessage(websocket.TextMessage, data); err != nil {
+		log.Fatal("write:", err)
+	}
+
+	_, message, err := conn.ReadMessage()
+	if err != nil {
+		log.Fatal("read:", err)
+	}
+	log.Println(string(message))
+}"
+`;
+
 exports[`fixtures (snapshot) — javascript/websocket (browser) > pubsub.yaml — receive-only operation uses addEventListener 1`] = `
 "// NOTE: some values could not be resolved from the AsyncAPI document's
 // default/examples and were filled with a placeholder — replace them
@@ -238,4 +361,93 @@ async def main() -> None:
 
 
 asyncio.run(main())"
+`;
+
+exports[`fixtures (snapshot) — rust/tokio-tungstenite > pubsub.yaml — receive-only operation loops over read without sending 1`] = `
+"// NOTE: some values could not be resolved from the AsyncAPI document's
+// default/examples and were filled with a placeholder — replace them
+// with real values before running this snippet:
+//   - query param "region"
+
+use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+
+#[tokio::main]
+async fn main() {
+    let url = "wss://alerts.example.com/alerts?region=%3Cregion%3E";
+
+    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
+    let (_write, mut read) = ws_stream.split();
+
+    // Example message shape for this operation ("sampleAlert"):
+    // {
+    //   "severity": "high",
+    //   "message": "disk usage above threshold"
+    // }
+
+    while let Some(msg) = read.next().await {
+        println!("{}", msg.expect("Failed to read message"));
+    }
+}"
+`;
+
+exports[`fixtures (snapshot) — rust/tokio-tungstenite > simple.yaml — send-only, no bindings 1`] = `
+"use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::{connect_async, tungstenite::Message};
+
+
+#[tokio::main]
+async fn main() {
+    let url = "wss://ping.example.com/ping";
+
+    let (ws_stream, _) = connect_async(url).await.expect("Failed to connect");
+    let (mut write, mut read) = ws_stream.split();
+
+    let payload = serde_json::json!({
+      "timestamp": 1735689600
+    });
+
+    write
+        .send(Message::Text(payload.to_string().into()))
+        .await
+        .expect("Failed to send message");
+
+    if let Some(msg) = read.next().await {
+        println!("{}", msg.expect("Failed to read message"));
+    }
+}"
+`;
+
+exports[`fixtures (snapshot) — rust/tokio-tungstenite > with-bindings.yaml — query param and header both resolve 1`] = `
+"use futures_util::{SinkExt, StreamExt};
+use tokio_tungstenite::{connect_async, tungstenite::client::IntoClientRequest, tungstenite::Message};
+
+
+#[tokio::main]
+async fn main() {
+    let url = "wss://chat.example.com/rooms/general?token=abc123token";
+
+    let mut request = url.into_client_request().expect("Invalid URL");
+    request
+        .headers_mut()
+        .insert("X-Client-Version", "1.0".parse().expect("Invalid header value"));
+
+    let (ws_stream, _) = connect_async(request).await.expect("Failed to connect");
+    let (mut write, mut read) = ws_stream.split();
+
+    let payload = serde_json::json!({
+      "text": "hello world",
+      "from": "alice"
+    });
+
+    write
+        .send(Message::Text(payload.to_string().into()))
+        .await
+        .expect("Failed to send message");
+
+    if let Some(msg) = read.next().await {
+        println!("{}", msg.expect("Failed to read message"));
+    }
+}"
 `;

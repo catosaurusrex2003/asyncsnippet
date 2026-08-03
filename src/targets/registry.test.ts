@@ -3,22 +3,28 @@ import { describe, expect, it } from "vitest";
 import { addTarget, addTargetClient, getSupportedTargets, targets } from "./index.js";
 
 describe("target/client registry", () => {
-  it("ships the default javascript and python targets", () => {
-    expect(Object.keys(targets)).toEqual(expect.arrayContaining(["javascript", "python"]));
+  it("ships the default javascript, python, rust, and go targets", () => {
+    expect(Object.keys(targets)).toEqual(
+      expect.arrayContaining(["javascript", "python", "rust", "go"]),
+    );
     expect(Object.keys(targets.javascript!.clientsById)).toEqual(
       expect.arrayContaining(["ws", "websocket"]),
     );
     expect(Object.keys(targets.python!.clientsById)).toEqual(
       expect.arrayContaining(["websockets"]),
     );
+    expect(Object.keys(targets.rust!.clientsById)).toEqual(
+      expect.arrayContaining(["tokio-tungstenite"]),
+    );
+    expect(Object.keys(targets.go!.clientsById)).toEqual(expect.arrayContaining(["gorilla"]));
   });
 
   it("addTarget registers a new target", () => {
     addTarget({
-      info: { key: "rust", title: "Rust", default: "tokio-tungstenite" },
+      info: { key: "csharp", title: "C#", default: "websocket-client" },
       clientsById: {},
     });
-    expect(targets.rust).toBeDefined();
+    expect(targets.csharp).toBeDefined();
   });
 
   it("addTarget throws when the key is already registered", () => {
@@ -31,19 +37,19 @@ describe("target/client registry", () => {
   });
 
   it("addTargetClient registers a client under an existing target", () => {
-    addTarget({ info: { key: "go", title: "Go", default: "gorilla" }, clientsById: {} });
-    addTargetClient("go", {
+    addTarget({ info: { key: "kotlin", title: "Kotlin", default: "okhttp" }, clientsById: {} });
+    addTargetClient("kotlin", {
       info: {
-        key: "gorilla",
-        title: "gorilla/websocket",
+        key: "okhttp",
+        title: "OkHttp",
         description: "",
         link: "",
-        extname: ".go",
+        extname: ".kt",
         protocol: "ws",
       },
       convert: () => "",
     });
-    expect(targets.go!.clientsById.gorilla).toBeDefined();
+    expect(targets.kotlin!.clientsById.okhttp).toBeDefined();
   });
 
   it("addTargetClient throws when the target isn't registered", () => {

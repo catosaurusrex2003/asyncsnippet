@@ -59,11 +59,13 @@ A **target** is a language (`targetId`); a **client** is a concrete library or A
 
 ### Available now
 
-| `targetId`   | `clientId`   | Runtime              | Handshake headers | Notes                                                                 |
-| ------------ | ------------ | -------------------- | ----------------- | --------------------------------------------------------------------- |
-| `javascript` | `ws`         | Node.js              | Yes                | Default JS client. Requires the [`ws`](https://github.com/websockets/ws) package. |
-| `javascript` | `websocket`  | Browser              | No                 | WHATWG `WebSocket` — no dependency. Header bindings are omitted with a comment in the snippet; use `ws` when auth needs headers. |
-| `python`     | `websockets` | Python 3 (asyncio)   | Yes                | Default Python client. Requires the [`websockets`](https://websockets.readthedocs.io/) package. |
+| `targetId`   | `clientId`          | Runtime            | Notes                                                                                                                                                |
+| ------------ | ------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `javascript` | `ws`                | Node.js            | Default JS client. Requires the [`ws`](https://github.com/websockets/ws) package.                                                                    |
+| `javascript` | `websocket`         | Browser            | WHATWG `WebSocket` — no dependency. Header bindings are omitted with a comment in the snippet; use `ws` when auth needs headers.                     |
+| `python`     | `websockets`        | Python 3 (asyncio) | Default Python client. Requires the [`websockets`](https://websockets.readthedocs.io/) package.                                                      |
+| `rust`       | `tokio-tungstenite` | Rust (Tokio)       | Default Rust client. Requires the [`tokio-tungstenite`](https://github.com/snapview/tokio-tungstenite) crate (plus `futures-util` and `serde_json`). |
+| `go`         | `gorilla`           | Go                 | Default Go client. Requires the [`gorilla/websocket`](https://github.com/gorilla/websocket) package.                                                 |
 
 Examples:
 
@@ -71,15 +73,15 @@ Examples:
 snippet.convert("sendMessage", "javascript", "ws");
 snippet.convert("sendMessage", "javascript", "websocket");
 snippet.convert("sendMessage", "python", "websockets");
+snippet.convert("sendMessage", "rust", "tokio-tungstenite");
+snippet.convert("sendMessage", "go", "gorilla");
 ```
 
 ### Planned
 
-| Protocol                  | Language   | Client              |
-| ------------------------- | ---------- | ------------------- |
-| WebSocket                 | Rust       | `tokio-tungstenite` |
-| WebSocket                 | Go         | `gorilla/websocket` |
-| Kafka / MQTT / AMQP / SSE | —          | —                   |
+| Protocol                  | Language | Client |
+| ------------------------- | -------- | ------ |
+| Kafka / MQTT / AMQP / SSE | —        | —      |
 
 ### Custom targets
 
@@ -106,6 +108,10 @@ JavaScript (default: ws)
   - WebSocket (browser) [ws] (websocket)
 Python (default: websockets)
   - websockets [ws] (websockets)
+Rust (default: tokio-tungstenite)
+  - tokio-tungstenite [ws] (tokio-tungstenite)
+Go (default: gorilla)
+  - gorilla/websocket [ws] (gorilla)
 ```
 
 Each client's `protocol` is the AsyncAPI channel binding it generates code for (currently always `"ws"` — Kafka/MQTT/AMQP/SSE won't appear here until those clients exist).

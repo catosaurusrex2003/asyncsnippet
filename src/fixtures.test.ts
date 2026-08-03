@@ -118,3 +118,60 @@ describe("fixtures (snapshot) — python/websockets", () => {
     expect(result).not.toContain("websocket.send(");
   });
 });
+
+describe("fixtures (snapshot) — rust/tokio-tungstenite", () => {
+  it("simple.yaml — send-only, no bindings", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "rust", "tokio-tungstenite");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("connect_async(url)");
+    expect(result).toContain("#[tokio::main]");
+  });
+
+  it("with-bindings.yaml — query param and header both resolve", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-bindings.yaml"));
+    const result = snippet.convert("sendMessage", "rust", "tokio-tungstenite");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("/rooms/general?token=abc123token");
+    expect(result).toContain('"X-Client-Version"');
+    expect(result).toContain("into_client_request()");
+    expect(result).toContain("connect_async(request)");
+  });
+
+  it("pubsub.yaml — receive-only operation loops over read without sending", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "rust", "tokio-tungstenite");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("while let Some(msg) = read.next().await {");
+    expect(result).not.toContain(".send(Message::Text");
+    expect(result).toContain("Example message shape");
+  });
+});
+
+describe("fixtures (snapshot) — go/gorilla", () => {
+  it("simple.yaml — send-only, no bindings", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "go", "gorilla");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("websocket.DefaultDialer.Dial(url, nil)");
+    expect(result).not.toContain("net/http");
+  });
+
+  it("with-bindings.yaml — query param and header both resolve", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-bindings.yaml"));
+    const result = snippet.convert("sendMessage", "go", "gorilla");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("/rooms/general?token=abc123token");
+    expect(result).toContain('header.Set("X-Client-Version", "1.0")');
+    expect(result).toContain("websocket.DefaultDialer.Dial(url, header)");
+  });
+
+  it("pubsub.yaml — receive-only operation loops over ReadMessage without writing", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "go", "gorilla");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("conn.ReadMessage()");
+    expect(result).not.toContain("WriteMessage");
+    expect(result).toContain("Example message shape");
+  });
+});

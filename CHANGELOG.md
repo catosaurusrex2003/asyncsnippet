@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.4] - 2026-08-03
+
+### Added
+
+- `rust`/`tokio-tungstenite` client using Tokio async/await,
+  `serde_json::json!` for payloads, and `IntoClientRequest` for handshake
+  headers.
+- `go`/`gorilla` client using `gorilla/websocket`'s `DefaultDialer`,
+  `map[string]interface{}` payload literals, and `http.Header` for handshake
+  headers.
+
 ## [0.1.3] - 2026-08-03
 
 ### Added
@@ -48,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: generate Node.js `ws` client snippets from an AsyncAPI 3.x
   WebSocket operation (`javascript` / `ws` only).
 
+[0.1.4]: https://github.com/catosaurusrex2003/asyncsnippet/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/catosaurusrex2003/asyncsnippet/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/catosaurusrex2003/asyncsnippet/compare/5a6f810...v0.1.2
 [0.1.1]: https://github.com/catosaurusrex2003/asyncsnippet/compare/e5b20a2...5a6f810

@@ -1,8 +1,10 @@
 import type { CodeBuilderOptions } from "../helpers/code-builder.js";
 import type { Request } from "../request.js";
 
+import { tokioTungstenite } from "./rust/tokio-tungstenite/client.js";
 import { websockets as pythonWebsockets } from "./python/websockets/client.js";
 import { websocket } from "./javascript/websocket/client.js";
+import { gorilla } from "./go/gorilla/client.js";
 import { ws } from "./javascript/ws/client.js";
 
 export interface ClientInfo {
@@ -91,3 +93,9 @@ addTargetClient("javascript", websocket);
 
 addTarget({ info: { key: "python", title: "Python", default: "websockets" }, clientsById: {} });
 addTargetClient("python", pythonWebsockets);
+
+addTarget({ info: { key: "rust", title: "Rust", default: "tokio-tungstenite" }, clientsById: {} });
+addTargetClient("rust", tokioTungstenite);
+
+addTarget({ info: { key: "go", title: "Go", default: "gorilla" }, clientsById: {} });
+addTargetClient("go", gorilla);

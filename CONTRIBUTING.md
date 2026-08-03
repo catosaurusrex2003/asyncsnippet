@@ -28,7 +28,7 @@ The registry lives in [`src/targets/index.ts`](./src/targets/index.ts) and expos
 - `addTarget(target: Target): void` — registers a new language/platform. Throws if `target.info.key` is already registered.
 - `addTargetClient(targetId: string, client: Client): void` — registers a client under an already-registered target. Throws if the target doesn't exist yet, or if a client with the same key is already registered on it.
 
-Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `python/websockets`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
+Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `python/websockets`, `rust/tokio-tungstenite`, `go/gorilla`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
 
 ### Contract
 
