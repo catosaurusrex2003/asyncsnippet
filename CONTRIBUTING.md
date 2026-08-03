@@ -25,11 +25,21 @@ generated output, update them with `npx vitest run -u`.
 
 ## Adding a target or client
 
-v1 does **not** yet ship an `addTarget` / `addTargetClient` registry (that is
-tracked as a follow-up). Today the registry is the hardcoded `targets` object
-in [`src/targets/index.ts`](./src/targets/index.ts). Adding support means
-editing that file and adding a client module — same shape httpsnippet uses,
-just without the runtime registration helpers yet.
+The registry lives in [`src/targets/index.ts`](./src/targets/index.ts) and
+exposes two functions, mirroring httpsnippet's `addTarget` / `addTargetClient`:
+
+- `addTarget(target: Target): void` — registers a new language/platform.
+  Throws if `target.info.key` is already registered.
+- `addTargetClient(targetId: string, client: Client): void` — registers a
+  client under an already-registered target. Throws if the target doesn't
+  exist yet, or if a client with the same key is already registered on it.
+
+Built-in targets/clients (`javascript/ws`, `javascript/websocket`,
+`python/websockets`) are registered this same way at the bottom of
+`src/targets/index.ts` — that's the reference example to copy for a new one.
+Both functions are also exported from the package root (`import { addTarget,
+addTargetClient } from "asyncsnippet"`) for consumers who want to register
+their own target/client without forking the library.
 
 ### Contract
 
@@ -69,14 +79,11 @@ the existing [`javascript/ws`](./src/targets/javascript/ws/client.ts) client.
 ### Steps
 
 1. Add `src/targets/<targetId>/<clientId>/client.ts` exporting a `Client`.
-2. Register it on `targets` in `src/targets/index.ts` (create the target entry
-   if it is a new language).
+2. In `src/targets/index.ts`, call `addTarget(...)` first if it's a new
+   language, then `addTargetClient(targetId, client)`.
 3. Add or extend a fixture under `src/fixtures/` and assert the generated
    snippet in `src/fixtures.test.ts` (prefer snapshots).
 4. Run `npm test` and `npm run lint`.
-
-When the real `addTarget` / `addTargetClient` API lands, this file will be
-updated; the `Client` / `Target` shapes above are intended to stay stable.
 
 ## Releasing
 

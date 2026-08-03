@@ -1,6 +1,8 @@
 import type { CodeBuilderOptions } from "../helpers/code-builder.js";
 import type { Request } from "../request.js";
 
+import { websockets as pythonWebsockets } from "./python/websockets/client.js";
+import { websocket } from "./javascript/websocket/client.js";
 import { ws } from "./javascript/ws/client.js";
 
 export interface ClientInfo {
@@ -25,20 +27,43 @@ export interface Target {
   clientsById: Record<string, Client>;
 }
 
+const targets: Record<string, Target> = {};
+
 /**
- * v1 target/client registry. Hardcoded to a single entry (see design doc's
- * "targetId/clientId validation") — not yet the extensible `addTarget`
- * registry described in the design doc's Approach B.
+ * Registers a new target (language/platform), mirroring httpsnippet's
+ * `addTarget`. Throws if `target.info.key` is already registered — use
+ * {@link addTargetClient} to add clients to an existing target instead.
  */
-export const targets: Record<string, Target> = {
-  javascript: {
-    info: {
-      key: "javascript",
-      title: "JavaScript",
-      default: "ws",
-    },
-    clientsById: {
-      ws,
-    },
-  },
-};
+export function addTarget(target: Target): void {
+  if (targets[target.info.key]) {
+    throw new Error(`Target "${target.info.key}" is already registered`);
+  }
+  targets[target.info.key] = { ...target, clientsById: { ...target.clientsById } };
+}
+
+/**
+ * Registers a new client under an already-registered target, mirroring
+ * httpsnippet's `addTargetClient`. Throws if the target hasn't been
+ * registered yet, or if a client with the same key already exists on it.
+ */
+export function addTargetClient(targetId: string, client: Client): void {
+  const target = targets[targetId];
+  if (!target) {
+    throw new Error(
+      `Cannot register client "${client.info.key}": target "${targetId}" is not registered. Call addTarget() first.`,
+    );
+  }
+  if (target.clientsById[client.info.key]) {
+    throw new Error(`Client "${client.info.key}" is already registered for target "${targetId}"`);
+  }
+  target.clientsById[client.info.key] = client;
+}
+
+export { targets };
+
+addTarget({ info: { key: "javascript", title: "JavaScript", default: "ws" }, clientsById: {} });
+addTargetClient("javascript", ws);
+addTargetClient("javascript", websocket);
+
+addTarget({ info: { key: "python", title: "Python", default: "websockets" }, clientsById: {} });
+addTargetClient("python", pythonWebsockets);

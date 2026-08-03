@@ -48,11 +48,11 @@ describe("error paths", () => {
 
   it("throws UnsupportedTargetError for an unsupported targetId/clientId", () => {
     const snippet = new AsyncSnippet(baseDocument);
-    expect(() => snippet.convert("sendPing", "python", "websockets")).toThrow(
+    expect(() => snippet.convert("sendPing", "rust", "tokio-tungstenite")).toThrow(
       UnsupportedTargetError,
     );
-    expect(() => snippet.convert("sendPing", "python", "websockets")).toThrow(
-      /Unsupported target "python\/websockets"/,
+    expect(() => snippet.convert("sendPing", "rust", "tokio-tungstenite")).toThrow(
+      /Unsupported target "rust\/tokio-tungstenite"/,
     );
   });
 

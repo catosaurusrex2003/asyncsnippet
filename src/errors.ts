@@ -13,10 +13,12 @@ export class UnknownOperationError extends AsyncSnippetError {
 }
 
 export class UnsupportedTargetError extends AsyncSnippetError {
-  constructor(targetId: string, clientId: string) {
-    super(
-      `Unsupported target "${targetId}/${clientId}". asyncsnippet v1 only supports targetId: "javascript", clientId: "ws".`,
-    );
+  constructor(targetId: string, clientId: string, available: string[] = []) {
+    const suffix =
+      available.length > 0
+        ? ` Registered targetId/clientId pairs: ${available.join(", ")}.`
+        : " No targets are registered — did you forget to import a client module?";
+    super(`Unsupported target "${targetId}/${clientId}".${suffix}`);
     this.name = "UnsupportedTargetError";
   }
 }

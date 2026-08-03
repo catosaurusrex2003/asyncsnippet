@@ -2,18 +2,28 @@ import type { Client } from "../../index.js";
 import { CodeBuilder, type CodeBuilderOptions } from "../../../helpers/code-builder.js";
 import { buildWsUrl } from "../../../helpers/ws-url.js";
 
-export const ws: Client = {
+export const websocket: Client = {
   info: {
-    key: "ws",
-    title: "ws",
+    key: "websocket",
+    title: "WebSocket (browser)",
     description:
-      "WebSocket client for Node.js — chosen over the browser-native WebSocket API because it supports custom handshake headers",
-    link: "https://github.com/websockets/ws",
+      "Browser-native WHATWG WebSocket API — no dependency to install, but it cannot set custom handshake headers, so only query-param bindings are supported.",
+    link: "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket",
     extname: ".js",
   },
   convert: (request, inputOpts?: CodeBuilderOptions) => {
     const opts = { indent: "  ", ...inputOpts };
     const { push, blank, join } = new CodeBuilder({ indent: opts.indent });
+
+    const headerNames = Object.keys(request.headers);
+    if (headerNames.length > 0) {
+      push('// NOTE: this operation\'s "ws" binding declares handshake headers');
+      push(`// (${headerNames.join(", ")}), but the browser-native WebSocket API cannot`);
+      push("// set custom headers on the handshake request — they are omitted below.");
+      push("// Move any required auth into the query string, or generate a Node.js");
+      push('// snippet instead (targetId: "javascript", clientId: "ws").');
+      blank();
+    }
 
     if (request.placeholders.length > 0) {
       push("// NOTE: some values could not be resolved from the AsyncAPI document's");
@@ -25,29 +35,12 @@ export const ws: Client = {
       blank();
     }
 
-    push("import WebSocket from 'ws';");
-    blank();
-
     const url = buildWsUrl(request.serverUrl, request.channelAddress, request.query);
-    const hasHeaders = Object.keys(request.headers).length > 0;
-
-    if (hasHeaders) {
-      push(`const socket = new WebSocket('${url}', {`);
-      push("headers: {", 1);
-      const headerEntries = Object.entries(request.headers);
-      headerEntries.forEach(([name, value], i) => {
-        const comma = i < headerEntries.length - 1 ? "," : "";
-        push(`'${name}': '${value}'${comma}`, 2);
-      });
-      push("},", 1);
-      push("});");
-    } else {
-      push(`const socket = new WebSocket('${url}');`);
-    }
+    push(`const socket = new WebSocket('${url}');`);
     blank();
 
     if (request.action === "send") {
-      push("socket.on('open', () => {");
+      push("socket.addEventListener('open', () => {");
       const payloadLines = JSON.stringify(request.message.payload, null, 2).split("\n");
       payloadLines[payloadLines.length - 1] += "));";
       push(`socket.send(JSON.stringify(${payloadLines[0]}`, 1);
@@ -56,8 +49,8 @@ export const ws: Client = {
       }
       push("});");
       blank();
-      push("socket.on('message', (data) => {");
-      push("console.log(data.toString());", 1);
+      push("socket.addEventListener('message', (event) => {");
+      push("console.log(event.data);", 1);
       push("});");
     } else {
       const messageLabel = request.message.name ? ` ("${request.message.name}")` : "";
@@ -66,8 +59,8 @@ export const ws: Client = {
         push(`// ${line}`);
       }
       blank();
-      push("socket.on('message', (data) => {");
-      push("console.log(data.toString());", 1);
+      push("socket.addEventListener('message', (event) => {");
+      push("console.log(event.data);", 1);
       push("});");
     }
 

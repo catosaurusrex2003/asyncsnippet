@@ -67,27 +67,37 @@ Current state: exactly one target/client pair, hardcoded
 plugin system. Candidates, in the order the design doc itself already flagged
 them as fast-follows:
 
-- [ ] **Real target/client registry (`addTarget`/`addClient`).** This is the
+- [x] **Real target/client registry (`addTarget`/`addClient`).** This is the
   prerequisite for everything else in this section — right now adding a
   second client means editing the hardcoded `targets` object, not extending
   it. Mirrors httpsnippet's `Target`/`Client` registration pattern (already
   referenced in this codebase's own type names). Do this *before* adding a
   second client, not after — retrofitting a registry under two clients is
   more work than designing it for two from the start.
-  **Effort: M. Priority: next.**
+  **Effort: M. Priority: next.** — _Fixed: `src/targets/index.ts` now exposes
+  `addTarget`/`addTargetClient` (throwing on duplicate keys / unregistered
+  targets), both re-exported from the package root. The built-in
+  `javascript`/`ws`, `javascript`/`websocket`, and `python`/`websockets`
+  clients register themselves through the same public functions._
 
-- [ ] **Browser-safe JS client** (`javascript/websocket` — WHATWG
+- [x] **Browser-safe JS client** (`javascript/websocket` — WHATWG
   `WebSocket`, no `ws` dependency). Explicitly named as "a candidate
   fast-follow, not v1" in the design doc's Constraints. Scope: query-param-only
   bindings, with a documented, thrown/warned limitation when the operation
   needs custom headers (browser `WebSocket` can't set them). This is the
   most-requested shape for a docs "try it in your browser console" widget —
   arguably higher value than a second language. **Effort: M. Priority: next.**
+  — _Fixed: `src/targets/javascript/websocket/client.ts`. Query/channel
+  params resolve as usual; if the binding declares headers, the snippet
+  keeps the query string and emits a comment explaining the headers were
+  dropped (warned, not thrown) with a pointer to the `ws` client instead._
 
-- [ ] **Python client** (`python/websockets`, using the `websockets`
+- [x] **Python client** (`python/websockets`, using the `websockets`
   package). Named directly in the design doc's Approach B client list.
   Straightforward once the registry exists — same `Request` object, new
-  `CodeBuilder`-equivalent template. **Effort: M. Priority: next.**
+  `CodeBuilder`-equivalent template. **Effort: M. Priority: next.** — _Fixed:
+  `src/targets/python/websockets/client.ts`, an asyncio `websockets.connect`
+  client supporting handshake headers via `additional_headers`._
 
 - [ ] **A couple more language clients** once the registry + 2 clients have
   proven the abstraction: Rust (`tokio-tungstenite`, also named in the design
