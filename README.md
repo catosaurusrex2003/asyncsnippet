@@ -68,6 +68,7 @@ Deliberately narrow — see the design doc for the full reasoning:
 - **JSON/text payloads only.** No binary encodings (Avro, Protobuf).
 - **No security schemes.** Only binding-level `query`/`headers` are resolved; AsyncAPI `security` objects are not.
 - **Single server.** Uses the first entry in the document's `servers` map.
+- **Channel-level `ws` binding only.** AsyncAPI 3.x allows `bindings.ws` at the server, channel, operation, or message level. asyncsnippet reads only `channel.bindings.ws` — server/operation/message-level `ws` bindings are ignored. If your `query`/`headers` are set anywhere other than the channel, they will not appear in the generated snippet and `MissingBindingError` will be thrown if the channel itself has no `ws` binding, even if another level does.
 - **First message wins.** An operation with multiple `messages` uses the first one. If `operation.messages` is omitted, all channel messages apply (AsyncAPI 3.x).
 - **Node.js + `ws`, not the browser.** The browser-native `WebSocket` API can't set custom handshake headers — `ws` can, and AsyncAPI WS bindings commonly need them.
 - **`targetId`/`clientId` are hardcoded** to `"javascript"`/`"ws"` for v1 — the four-argument `convert()` signature is forward-compatible with a future target/client plugin registry (mirroring [httpsnippet's](https://github.com/readmeio/httpsnippet) `targets/` architecture), but v1 does not implement one.
@@ -76,7 +77,6 @@ Deliberately narrow — see the design doc for the full reasoning:
 
 `convert()` throws a typed, descriptive error (never a silent `false`) for:
 
-- An invalid/unparseable AsyncAPI document (`InvalidDocumentError`)
 - An unknown `operationId` (`UnknownOperationError`)
 - An unsupported `targetId`/`clientId` (`UnsupportedTargetError`)
 - An operation with no channels (`MissingChannelError`)
