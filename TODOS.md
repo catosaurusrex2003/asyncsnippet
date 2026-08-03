@@ -46,7 +46,8 @@ compresses most of these to well under that). **Priority** is now / next / later
 ## 1. Infrastructure the design doc already promised but never shipped
 
 - [x] **CI.** Release-on-push-to-`main` via GitHub Actions (`.github/workflows/release.yml`):
-  bump patch version, `npm publish` via trusted publishing (OIDC), push tag.
+  publish the version in `package.json` via trusted publishing (OIDC) when it
+  isn't already on npm; skip otherwise.
   **Effort: S. Priority: now.**
 
 - [ ] **CHANGELOG.md.** Two versions shipped (`0.1.0`→`0.1.1`) with no record

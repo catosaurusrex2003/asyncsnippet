@@ -6,7 +6,7 @@ on:
       - main
 
 permissions:
-  contents: write
+  contents: read
   id-token: write # required for npm trusted publishing (OIDC)
 
 jobs:
@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -28,10 +26,13 @@ jobs:
       - run: npm ci
       - run: npm test
 
-      - name: Bump version, publish, push tag
+      - name: Publish if version is new
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          npm version patch -m "chore: release %s"
+          NAME=$(node -p "require('./package.json').name")
+          VERSION=$(node -p "require('./package.json').version")
+          if npm view "${NAME}@${VERSION}" version >/dev/null 2>&1; then
+            echo "${NAME}@${VERSION} is already on npm — skipping publish"
+            exit 0
+          fi
+          echo "Publishing ${NAME}@${VERSION}"
           npm publish --provenance
-          git push --follow-tags
