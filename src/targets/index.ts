@@ -4,6 +4,7 @@ import type { Request } from "../request.js";
 import { tokioTungstenite } from "./rust/tokio-tungstenite/client.js";
 import { websockets as pythonWebsockets } from "./python/websockets/client.js";
 import { websocket } from "./javascript/websocket/client.js";
+import { kafkajs } from "./javascript/kafkajs/client.js";
 import { gorilla } from "./go/gorilla/client.js";
 import { ws } from "./javascript/ws/client.js";
 
@@ -90,6 +91,7 @@ export function getSupportedTargets(): SupportedTarget[] {
 addTarget({ info: { key: "javascript", title: "JavaScript", default: "ws" }, clientsById: {} });
 addTargetClient("javascript", ws);
 addTargetClient("javascript", websocket);
+addTargetClient("javascript", kafkajs);
 
 addTarget({ info: { key: "python", title: "Python", default: "websockets" }, clientsById: {} });
 addTargetClient("python", pythonWebsockets);

@@ -1,12 +1,13 @@
 {
   "name": "asyncsnippet",
-  "version": "0.1.4",
-  "description": "Code snippet generator for asynchronous protocol operations, using an AsyncAPI operation as the source of truth (WebSocket only for now)",
+  "version": "0.1.5",
+  "description": "Code snippet generator for asynchronous protocol operations, using an AsyncAPI operation as the source of truth",
   "keywords": [
     "async",
     "asyncapi",
     "codegen",
     "event-driven",
+    "kafka",
     "snippet",
     "websocket",
     "ws"

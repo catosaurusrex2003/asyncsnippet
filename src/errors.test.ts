@@ -88,6 +88,14 @@ describe("error paths", () => {
     );
   });
 
+  it("throws MissingBindingError when the channel has no kafka binding", () => {
+    const snippet = new AsyncSnippet(baseDocument);
+    expect(() => snippet.convert("sendPing", "javascript", "kafkajs")).toThrow(MissingBindingError);
+    expect(() => snippet.convert("sendPing", "javascript", "kafkajs")).toThrow(
+      /Operation "sendPing" has no "kafka" channel binding/,
+    );
+  });
+
   it("throws MissingExampleError when the message has no examples entry", () => {
     const document: AsyncApiDocument = {
       ...baseDocument,

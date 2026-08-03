@@ -1,0 +1,61 @@
+asyncapi: 3.0.0
+info:
+  title: Order Events Service
+  version: 1.0.0
+servers:
+  production:
+    host: broker1.example.com:9092,broker2.example.com:9092
+    protocol: kafka
+channels:
+  orderEvents:
+    address: order-events
+    bindings:
+      kafka:
+        topic: order.events.v1
+    messages:
+      orderCreated:
+        summary: An order was created
+        bindings:
+          kafka:
+            key:
+              type: string
+              examples:
+                - order-42
+        payload:
+          type: object
+          properties:
+            orderId:
+              type: string
+            total:
+              type: number
+        examples:
+          - name: sampleOrderCreated
+            payload:
+              orderId: order-42
+              total: 59.99
+operations:
+  publishOrderCreated:
+    action: send
+    channel:
+      $ref: '#/channels/orderEvents'
+    bindings:
+      kafka:
+        clientId:
+          type: string
+          default: order-service-producer
+    messages:
+      - $ref: '#/channels/orderEvents/messages/orderCreated'
+  consumeOrderCreated:
+    action: receive
+    channel:
+      $ref: '#/channels/orderEvents'
+    bindings:
+      kafka:
+        groupId:
+          type: string
+          default: order-processing-service
+        clientId:
+          type: string
+          default: order-service-consumer
+    messages:
+      - $ref: '#/channels/orderEvents/messages/orderCreated'

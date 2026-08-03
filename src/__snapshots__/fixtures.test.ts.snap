@@ -230,6 +230,66 @@ func main() {
 }"
 `;
 
+exports[`fixtures (snapshot) — javascript/kafkajs > kafka.yaml — receive operation subscribes and consumes, without sending 1`] = `
+"import { Kafka } from 'kafkajs';
+
+const kafka = new Kafka({
+  clientId: 'order-service-consumer',
+  brokers: ['broker1.example.com:9092', 'broker2.example.com:9092'],
+});
+
+const consumer = kafka.consumer({ groupId: 'order-processing-service' });
+
+// Example message shape for this operation ("sampleOrderCreated"):
+// {
+//   "orderId": "order-42",
+//   "total": 59.99
+// }
+
+async function main() {
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'order.events.v1', fromBeginning: true });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      console.log(message.value?.toString());
+    },
+  });
+}
+
+main();"
+`;
+
+exports[`fixtures (snapshot) — javascript/kafkajs > kafka.yaml — send operation resolves the topic override and message key 1`] = `
+"import { Kafka } from 'kafkajs';
+
+const kafka = new Kafka({
+  clientId: 'order-service-producer',
+  brokers: ['broker1.example.com:9092', 'broker2.example.com:9092'],
+});
+
+const producer = kafka.producer();
+
+async function main() {
+  await producer.connect();
+  await producer.send({
+    topic: 'order.events.v1',
+    messages: [
+      {
+        key: 'order-42',
+        value: JSON.stringify({
+          "orderId": "order-42",
+          "total": 59.99
+        }),
+      },
+    ],
+  });
+  await producer.disconnect();
+}
+
+main();"
+`;
+
 exports[`fixtures (snapshot) — javascript/websocket (browser) > pubsub.yaml — receive-only operation uses addEventListener 1`] = `
 "// NOTE: some values could not be resolved from the AsyncAPI document's
 // default/examples and were filled with a placeholder — replace them

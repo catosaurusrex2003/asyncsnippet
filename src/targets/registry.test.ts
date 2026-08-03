@@ -8,7 +8,7 @@ describe("target/client registry", () => {
       expect.arrayContaining(["javascript", "python", "rust", "go"]),
     );
     expect(Object.keys(targets.javascript!.clientsById)).toEqual(
-      expect.arrayContaining(["ws", "websocket"]),
+      expect.arrayContaining(["ws", "websocket", "kafkajs"]),
     );
     expect(Object.keys(targets.python!.clientsById)).toEqual(
       expect.arrayContaining(["websockets"]),
@@ -86,9 +86,11 @@ describe("getSupportedTargets", () => {
 
     expect(javascript).toMatchObject({ key: "javascript", title: "JavaScript", default: "ws" });
     expect(javascript?.clients.map((c) => c.key)).toEqual(
-      expect.arrayContaining(["ws", "websocket"]),
+      expect.arrayContaining(["ws", "websocket", "kafkajs"]),
     );
-    expect(javascript?.clients.every((c) => c.protocol === "ws")).toBe(true);
+    expect(javascript?.clients.find((c) => c.key === "ws")?.protocol).toBe("ws");
+    expect(javascript?.clients.find((c) => c.key === "websocket")?.protocol).toBe("ws");
+    expect(javascript?.clients.find((c) => c.key === "kafkajs")?.protocol).toBe("kafka");
 
     expect(python).toMatchObject({ key: "python", title: "Python", default: "websockets" });
     expect(python?.clients.map((c) => c.key)).toEqual(expect.arrayContaining(["websockets"]));

@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.5] - 2026-08-03
+
+### Added
+
+- `javascript`/`kafkajs` client — the first non-WebSocket protocol. Kafka
+  producer/consumer code generation using the `kafkajs` package, with topic
+  override, message key, and consumer `groupId`/`clientId` resolution.
+- `Request`/`buildRequest` generalized to dispatch binding resolution per
+  protocol (`Request` gained `protocol`, `serverHost`, and an optional
+  `kafka` field); `MissingBindingError` now names the missing protocol
+  instead of hardcoding `"ws"`.
+
 ## [0.1.4] - 2026-08-03
 
 ### Added
@@ -59,6 +71,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Initial release: generate Node.js `ws` client snippets from an AsyncAPI 3.x
   WebSocket operation (`javascript` / `ws` only).
 
+[0.1.5]: https://github.com/catosaurusrex2003/asyncsnippet/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/catosaurusrex2003/asyncsnippet/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/catosaurusrex2003/asyncsnippet/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/catosaurusrex2003/asyncsnippet/compare/5a6f810...v0.1.2

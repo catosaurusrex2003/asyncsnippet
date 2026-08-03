@@ -175,3 +175,26 @@ describe("fixtures (snapshot) — go/gorilla", () => {
     expect(result).toContain("Example message shape");
   });
 });
+
+describe("fixtures (snapshot) — javascript/kafkajs", () => {
+  it("kafka.yaml — send operation resolves the topic override and message key", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("publishOrderCreated", "javascript", "kafkajs");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("new Kafka(");
+    expect(result).toContain("producer.send(");
+    expect(result).toContain("order.events.v1");
+    expect(result).toContain("key: 'order-42'");
+    expect(result).not.toContain("groupId:");
+  });
+
+  it("kafka.yaml — receive operation subscribes and consumes, without sending", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("consumeOrderCreated", "javascript", "kafkajs");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("consumer.subscribe(");
+    expect(result).toContain("consumer.run(");
+    expect(result).toContain("groupId: 'order-processing-service'");
+    expect(result).not.toContain("producer.send(");
+  });
+});

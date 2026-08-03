@@ -26,8 +26,14 @@ export interface WsChannelBinding {
   headers?: RawObjectSchema;
 }
 
+/** AsyncAPI 3.x Kafka channel binding — v1 models only the topic override. */
+export interface KafkaChannelBinding {
+  topic?: string;
+}
+
 export interface ChannelBindings {
   ws?: WsChannelBinding;
+  kafka?: KafkaChannelBinding;
 }
 
 export interface Channel {
@@ -43,9 +49,29 @@ export interface MessageExample {
   payload?: unknown;
 }
 
+/** AsyncAPI 3.x Kafka message binding — v1 models only the message key. */
+export interface KafkaMessageBinding {
+  key?: Parameter;
+}
+
+export interface MessageBindings {
+  kafka?: KafkaMessageBinding;
+}
+
 export interface Message {
   payload?: unknown;
   examples?: MessageExample[];
+  bindings?: MessageBindings;
+}
+
+/** AsyncAPI 3.x Kafka operation binding — consumer/producer client identity. */
+export interface KafkaOperationBinding {
+  groupId?: Parameter;
+  clientId?: Parameter;
+}
+
+export interface OperationBindings {
+  kafka?: KafkaOperationBinding;
 }
 
 export interface Operation {
@@ -53,6 +79,7 @@ export interface Operation {
   channel: Ref;
   messages?: Ref[];
   servers?: Ref[];
+  bindings?: OperationBindings;
 }
 
 export interface AsyncApiDocument {

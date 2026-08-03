@@ -1,6 +1,6 @@
 # asyncsnippet
 
-Generates WebSocket client code snippets from an [AsyncAPI](https://www.asyncapi.com/) operation — the async counterpart to [httpsnippet](https://github.com/readmeio/httpsnippet).
+Generates client code snippets from an [AsyncAPI](https://www.asyncapi.com/) operation, across multiple protocol bindings (WebSocket, Kafka) — the async counterpart to [httpsnippet](https://github.com/readmeio/httpsnippet).
 
 Built specifically for internal use by [apiuikit](https://github.com/AceTheCreator/apiuikit).
 
@@ -50,7 +50,14 @@ socket.on("message", (data) => {
 });
 ```
 
-Dynamic fields (path params, query, headers, payload) resolve from `default`, then `examples`, then a `<placeholder>`. A message with no `examples` causes `convert()` to throw.
+Dynamic fields (path params, query, headers, payload, and — for Kafka — message key/groupId/clientId) resolve from `default`, then `examples`, then a `<placeholder>`. A message with no `examples` causes `convert()` to throw.
+
+### Binding precedence
+
+Which level of the AsyncAPI document a binding is read from depends on the protocol:
+
+- **WebSocket (`ws`)**: channel-level only (`channel.bindings.ws`). An operation- or message-level `ws` binding is silently ignored.
+- **Kafka (`kafka`)**: three levels, each for a different concern — channel-level (`channel.bindings.kafka.topic`, both the presence gate and an optional topic-name override), operation-level (`operation.bindings.kafka.groupId` / `.clientId`), and message-level (`message.bindings.kafka.key`).
 
 ## Supported targets
 
@@ -59,13 +66,14 @@ A **target** is a language (`targetId`); a **client** is a concrete library or A
 
 ### Available now
 
-| `targetId`   | `clientId`          | Runtime            | Notes                                                                                                                                                |
-| ------------ | ------------------- | ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `javascript` | `ws`                | Node.js            | Default JS client. Requires the [`ws`](https://github.com/websockets/ws) package.                                                                    |
-| `javascript` | `websocket`         | Browser            | WHATWG `WebSocket` — no dependency. Header bindings are omitted with a comment in the snippet; use `ws` when auth needs headers.                     |
-| `python`     | `websockets`        | Python 3 (asyncio) | Default Python client. Requires the [`websockets`](https://websockets.readthedocs.io/) package.                                                      |
-| `rust`       | `tokio-tungstenite` | Rust (Tokio)       | Default Rust client. Requires the [`tokio-tungstenite`](https://github.com/snapview/tokio-tungstenite) crate (plus `futures-util` and `serde_json`). |
-| `go`         | `gorilla`           | Go                 | Default Go client. Requires the [`gorilla/websocket`](https://github.com/gorilla/websocket) package.                                                 |
+| `targetId`   | `clientId`          | Runtime            | Notes                                                                                                                                                   |
+| ------------ | ------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `javascript` | `ws`                | Node.js            | Default JS client. Requires the [`ws`](https://github.com/websockets/ws) package.                                                                       |
+| `javascript` | `websocket`         | Browser            | WHATWG `WebSocket` — no dependency. Header bindings are omitted with a comment in the snippet; use `ws` when auth needs headers.                        |
+| `python`     | `websockets`        | Python 3 (asyncio) | Default Python client. Requires the [`websockets`](https://websockets.readthedocs.io/) package.                                                         |
+| `rust`       | `tokio-tungstenite` | Rust (Tokio)       | Default Rust client. Requires the [`tokio-tungstenite`](https://github.com/snapview/tokio-tungstenite) crate (plus `futures-util` and `serde_json`).    |
+| `go`         | `gorilla`           | Go                 | Default Go client. Requires the [`gorilla/websocket`](https://github.com/gorilla/websocket) package.                                                    |
+| `javascript` | `kafkajs`           | Node.js            | Kafka producer/consumer client. Requires the [`kafkajs`](https://kafka.js.org/) package. Not the default JS client — `javascript`'s default stays `ws`. |
 
 Examples:
 
@@ -75,13 +83,14 @@ snippet.convert("sendMessage", "javascript", "websocket");
 snippet.convert("sendMessage", "python", "websockets");
 snippet.convert("sendMessage", "rust", "tokio-tungstenite");
 snippet.convert("sendMessage", "go", "gorilla");
+snippet.convert("publishOrderCreated", "javascript", "kafkajs");
 ```
 
 ### Planned
 
-| Protocol                  | Language | Client |
-| ------------------------- | -------- | ------ |
-| Kafka / MQTT / AMQP / SSE | —        | —      |
+| Protocol          | Language | Client |
+| ----------------- | -------- | ------ |
+| MQTT / AMQP / SSE | —        | —      |
 
 ### Custom targets
 
@@ -106,6 +115,7 @@ for (const target of getSupportedTargets()) {
 JavaScript (default: ws)
   - ws [ws] (ws)
   - WebSocket (browser) [ws] (websocket)
+  - kafkajs [kafka] (kafkajs)
 Python (default: websockets)
   - websockets [ws] (websockets)
 Rust (default: tokio-tungstenite)
@@ -114,7 +124,7 @@ Go (default: gorilla)
   - gorilla/websocket [ws] (gorilla)
 ```
 
-Each client's `protocol` is the AsyncAPI channel binding it generates code for (currently always `"ws"` — Kafka/MQTT/AMQP/SSE won't appear here until those clients exist).
+Each client's `protocol` is the AsyncAPI channel binding it generates code for — `ws` for the WebSocket clients, `kafka` for `javascript/kafkajs`. MQTT/AMQP/SSE won't appear here until those clients exist.
 
 ## License
 

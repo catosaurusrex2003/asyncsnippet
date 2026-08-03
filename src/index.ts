@@ -36,7 +36,7 @@ export class AsyncSnippet {
       throw new UnsupportedTargetError(targetId, clientId, available);
     }
 
-    const request = buildRequest(this.document, operationId);
+    const request = buildRequest(this.document, operationId, client.info.protocol);
     return client.convert(request, options);
   }
 }

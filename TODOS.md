@@ -114,7 +114,7 @@ them as fast-follows:
       headers). A `curl`/`wscat` CLI target remains unaddressed — not requested
       here._
 
-- [ ] **Other AsyncAPI protocol bindings — Kafka, MQTT, AMQP, SSE.** This is
+- [x] **Other AsyncAPI protocol bindings — Kafka, MQTT, AMQP, SSE.** This is
       the design doc's stated 10x vision ("httpsnippet for everything that isn't
       request/response HTTP") and the real differentiator if it lands — nobody
       else has built this. It is also a materially bigger lift than a new WS
@@ -123,7 +123,23 @@ them as fast-follows:
       look before the first non-WS protocol, not a bolt-on. Don't start this
       until the WS wedge (registry + 2-3 clients) has real usage — the design
       doc's own sequencing logic ("prove the wedge before expanding") still
-      holds. **Effort: L per protocol. Priority: later.**
+      holds. **Effort: L per protocol. Priority: later.** — _Fixed (Kafka
+      only): shipped `javascript`/`kafkajs`. `Request`/`buildRequest` gained a
+      `protocol` parameter and now dispatch binding resolution per protocol —
+      channel-level topic gate/override, operation-level `groupId`/`clientId`,
+      message-level `key` (the library's first operation- and message-level
+      binding reads; WS stays channel-only). `MissingBindingError` is now
+      protocol-parameterized. MQTT/AMQP/SSE remain unaddressed — each still
+      needs its own binding-shape research; Kafka's design doesn't generalize
+      for free (SSE in particular has no real "binding" concept in the spec)._
+
+  - [ ] **Expand Kafka to other languages.** Only `javascript/kafkajs`
+        exists. Python (`kafka-python`/`confluent-kafka`), Rust (`rdkafka`),
+        Go (`segmentio/kafka-go`) are natural fast-follows now that the
+        `Request`/`buildRequest` protocol dispatch exists — this should be a
+        pure "new client for an existing protocol" job per
+        CONTRIBUTING.md, no further `request.ts`/`asyncapi-types.ts` changes
+        expected. **Effort: M each. Priority: later.**
 
 ## 3. Feature gaps (deferred in v1, tracked as open questions in the design doc)
 

@@ -28,7 +28,7 @@ The registry lives in [`src/targets/index.ts`](./src/targets/index.ts) and expos
 - `addTarget(target: Target): void` — registers a new language/platform. Throws if `target.info.key` is already registered.
 - `addTargetClient(targetId: string, client: Client): void` — registers a client under an already-registered target. Throws if the target doesn't exist yet, or if a client with the same key is already registered on it.
 
-Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `python/websockets`, `rust/tokio-tungstenite`, `go/gorilla`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
+Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `javascript/kafkajs`, `python/websockets`, `rust/tokio-tungstenite`, `go/gorilla`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
 
 ### Contract
 
@@ -42,6 +42,7 @@ interface Client {
     description: string;
     link: string; // docs / homepage for the underlying library
     extname: string; // e.g. ".js", ".py"
+    protocol: string; // AsyncAPI channel binding this client generates code for, e.g. "ws" or "kafka"
   };
   convert: (request: Request, options?: CodeBuilderOptions) => string;
 }
@@ -60,7 +61,7 @@ interface Target {
 }
 ```
 
-`convert()` receives a normalized [`Request`](./src/request.ts) (URL pieces, headers, query, payload, placeholders, send vs subscribe). Use [`CodeBuilder`](./src/helpers/code-builder.ts) to emit indented source, matching the existing [`javascript/ws`](./src/targets/javascript/ws/client.ts) client.
+`convert()` receives a normalized [`Request`](./src/request.ts) (URL pieces, headers, query, payload, placeholders, send vs subscribe, plus protocol-specific fields like `serverHost` and `kafka`). Use [`CodeBuilder`](./src/helpers/code-builder.ts) to emit indented source, matching the existing [`javascript/ws`](./src/targets/javascript/ws/client.ts) client.
 
 ### Steps
 
@@ -68,6 +69,10 @@ interface Target {
 2. In `src/targets/index.ts`, call `addTarget(...)` first if it's a new language, then `addTargetClient(targetId, client)`.
 3. Add or extend a fixture under `src/fixtures/` and assert the generated snippet in `src/fixtures.test.ts` (prefer snapshots).
 4. Run `npm test` and `npm run lint`.
+
+**New client for an existing protocol** (e.g. a Python Kafka client): steps 1-4 above are the whole job — the `Request` shape already carries everything that protocol needs.
+
+**New protocol** (Kafka was the first one after WebSocket): steps 1-4 aren't sufficient by themselves. You'll also need to add the protocol's binding types to [`src/asyncapi-types.ts`](./src/asyncapi-types.ts) (`ChannelBindings`/`OperationBindings`/`MessageBindings`) and a new branch in [`buildRequest`](./src/request.ts) that resolves those bindings into `Request` fields, keyed on the `protocol` parameter (which comes from the client's `info.protocol`). The `protocol === "kafka"` branch in `src/request.ts` is the reference example.
 
 ## Releasing
 

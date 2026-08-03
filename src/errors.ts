@@ -31,8 +31,8 @@ export class MissingChannelError extends AsyncSnippetError {
 }
 
 export class MissingBindingError extends AsyncSnippetError {
-  constructor(operationId: string) {
-    super(`Operation "${operationId}" has no "ws" channel binding`);
+  constructor(operationId: string, protocol: string) {
+    super(`Operation "${operationId}" has no "${protocol}" channel binding`);
     this.name = "MissingBindingError";
   }
 }
