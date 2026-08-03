@@ -106,3 +106,136 @@ socket.on('message', (data) => {
   console.log(data.toString());
 });"
 `;
+
+exports[`fixtures (snapshot) — javascript/websocket (browser) > pubsub.yaml — receive-only operation uses addEventListener 1`] = `
+"// NOTE: some values could not be resolved from the AsyncAPI document's
+// default/examples and were filled with a placeholder — replace them
+// with real values before running this snippet:
+//   - query param "region"
+
+const socket = new WebSocket('wss://alerts.example.com/alerts?region=%3Cregion%3E');
+
+// Example message shape for this operation ("sampleAlert"):
+// {
+//   "severity": "high",
+//   "message": "disk usage above threshold"
+// }
+
+socket.addEventListener('message', (event) => {
+  console.log(event.data);
+});"
+`;
+
+exports[`fixtures (snapshot) — javascript/websocket (browser) > simple.yaml — send-only, no bindings 1`] = `
+"const socket = new WebSocket('wss://ping.example.com/ping');
+
+socket.addEventListener('open', () => {
+  socket.send(JSON.stringify({
+    "timestamp": 1735689600
+  }));
+});
+
+socket.addEventListener('message', (event) => {
+  console.log(event.data);
+});"
+`;
+
+exports[`fixtures (snapshot) — javascript/websocket (browser) > with-bindings.yaml — query param resolves, header is documented as unsupported and omitted 1`] = `
+"// NOTE: this operation's "ws" binding declares handshake headers
+// (X-Client-Version), but the browser-native WebSocket API cannot
+// set custom headers on the handshake request — they are omitted below.
+// Move any required auth into the query string, or generate a Node.js
+// snippet instead (targetId: "javascript", clientId: "ws").
+
+const socket = new WebSocket('wss://chat.example.com/rooms/general?token=abc123token');
+
+socket.addEventListener('open', () => {
+  socket.send(JSON.stringify({
+    "text": "hello world",
+    "from": "alice"
+  }));
+});
+
+socket.addEventListener('message', (event) => {
+  console.log(event.data);
+});"
+`;
+
+exports[`fixtures (snapshot) — python/websockets > pubsub.yaml — receive-only operation uses async for 1`] = `
+"# NOTE: some values could not be resolved from the AsyncAPI document's
+# default/examples and were filled with a placeholder — replace them
+# with real values before running this snippet:
+#   - query param "region"
+
+import asyncio
+
+import websockets
+
+
+async def main() -> None:
+    async with websockets.connect("wss://alerts.example.com/alerts?region=%3Cregion%3E") as websocket:
+
+        # Example message shape for this operation ("sampleAlert"):
+        # {
+        #   "severity": "high",
+        #   "message": "disk usage above threshold"
+        # }
+
+        async for message in websocket:
+            print(message)
+
+
+asyncio.run(main())"
+`;
+
+exports[`fixtures (snapshot) — python/websockets > simple.yaml — send-only, no bindings 1`] = `
+"import asyncio
+import json
+
+import websockets
+
+
+async def main() -> None:
+    async with websockets.connect("wss://ping.example.com/ping") as websocket:
+
+        await websocket.send(
+            json.dumps({
+                "timestamp": 1735689600,
+            })
+        )
+
+        message = await websocket.recv()
+        print(message)
+
+
+asyncio.run(main())"
+`;
+
+exports[`fixtures (snapshot) — python/websockets > with-bindings.yaml — query param and header both resolve 1`] = `
+"import asyncio
+import json
+
+import websockets
+
+
+async def main() -> None:
+    async with websockets.connect(
+        "wss://chat.example.com/rooms/general?token=abc123token",
+        additional_headers={
+            "X-Client-Version": "1.0",
+        },
+    ) as websocket:
+
+        await websocket.send(
+            json.dumps({
+                "text": "hello world",
+                "from": "alice",
+            })
+        )
+
+        message = await websocket.recv()
+        print(message)
+
+
+asyncio.run(main())"
+`;

@@ -5,6 +5,21 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Real `addTarget` / `addTargetClient` target/client registry
+  (`src/targets/index.ts`), replacing the hardcoded single-entry `targets`
+  object. Both are exported from the package root for consumers who want to
+  register their own target/client.
+- Browser-safe `javascript`/`websocket` client using the WHATWG `WebSocket`
+  API — no runtime dependency. Query-param bindings only; if the operation's
+  `ws` binding declares custom headers, the generated snippet keeps the
+  query string but documents the dropped headers in a comment (the browser
+  API can't set handshake headers).
+- `python`/`websockets` client using the `websockets` package's asyncio API.
+
 ## [0.1.2] - 2026-08-03
 
 ### Added

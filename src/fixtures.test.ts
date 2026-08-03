@@ -64,3 +64,57 @@ describe("fixtures (snapshot)", () => {
     expect(result).toContain("1735689600");
   });
 });
+
+describe("fixtures (snapshot) — javascript/websocket (browser)", () => {
+  it("simple.yaml — send-only, no bindings", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "javascript", "websocket");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("new WebSocket(");
+    expect(result).not.toContain("import WebSocket");
+  });
+
+  it("with-bindings.yaml — query param resolves, header is documented as unsupported and omitted", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-bindings.yaml"));
+    const result = snippet.convert("sendMessage", "javascript", "websocket");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("/rooms/general?token=abc123token");
+    expect(result).toContain("cannot");
+    expect(result).not.toContain("'X-Client-Version'");
+  });
+
+  it("pubsub.yaml — receive-only operation uses addEventListener", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "javascript", "websocket");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("addEventListener('message'");
+    expect(result).not.toContain("socket.send(");
+  });
+});
+
+describe("fixtures (snapshot) — python/websockets", () => {
+  it("simple.yaml — send-only, no bindings", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "python", "websockets");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("import websockets");
+    expect(result).toContain("asyncio.run(main())");
+  });
+
+  it("with-bindings.yaml — query param and header both resolve", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-bindings.yaml"));
+    const result = snippet.convert("sendMessage", "python", "websockets");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("/rooms/general?token=abc123token");
+    expect(result).toContain('"X-Client-Version": "1.0"');
+    expect(result).toContain("additional_headers=");
+  });
+
+  it("pubsub.yaml — receive-only operation uses async for", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "python", "websockets");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("async for message in websocket:");
+    expect(result).not.toContain("websocket.send(");
+  });
+});

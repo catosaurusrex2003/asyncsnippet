@@ -3,11 +3,13 @@ import type { CodeBuilderOptions } from "./helpers/code-builder.js";
 
 import { UnsupportedTargetError } from "./errors.js";
 import { buildRequest } from "./request.js";
-import { targets } from "./targets/index.js";
+import { addTarget, addTargetClient, getSupportedTargets, targets } from "./targets/index.js";
 
 export type { AsyncApiDocument } from "./asyncapi-types.js";
 export type { Request } from "./request.js";
+export type { Client, ClientInfo, SupportedTarget, Target } from "./targets/index.js";
 export * from "./errors.js";
+export { addTarget, addTargetClient, getSupportedTargets };
 
 export type Options = CodeBuilderOptions;
 
@@ -20,18 +22,18 @@ export class AsyncSnippet {
   }
 
   /**
-   * Generates a code snippet for a single AsyncAPI operation.
-   *
-   * v1 only supports `targetId: "javascript"`, `clientId: "ws"` (see design
-   * doc's "targetId/clientId validation" — the four-argument signature is
-   * forward-compatible with a future target/client plugin registry, but v1
-   * is a hardcoded single path, not an extensible registry).
+   * Generates a code snippet for a single AsyncAPI operation. `targetId`/
+   * `clientId` are looked up in the target/client registry — see
+   * `addTarget`/`addTargetClient` for registering your own.
    */
   convert(operationId: string, targetId: string, clientId: string, options: Options = {}): string {
     const target = targets[targetId];
     const client = target?.clientsById[clientId];
     if (!client) {
-      throw new UnsupportedTargetError(targetId, clientId);
+      const available = Object.values(targets).flatMap((t) =>
+        Object.keys(t.clientsById).map((c) => `${t.info.key}/${c}`),
+      );
+      throw new UnsupportedTargetError(targetId, clientId, available);
     }
 
     const request = buildRequest(this.document, operationId);

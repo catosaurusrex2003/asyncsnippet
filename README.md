@@ -54,16 +54,61 @@ Dynamic fields (path params, query, headers, payload) resolve from `default`, th
 
 ## Supported targets
 
-| Protocol  | Language   | Client        | Status    |
-| --------- | ---------- | ------------- | --------- |
-| WebSocket | JavaScript | `ws` (Node.js) | Supported |
-| WebSocket | JavaScript | `websocket` (browser) | Planned |
-| WebSocket | Python     | `websockets`  | Planned  |
-| WebSocket | Rust       | `tokio-tungstenite` | Planned |
-| WebSocket | Go         | `gorilla/websocket` | Planned |
-| Kafka / MQTT / AMQP / SSE | — | — | Planned |
+A **target** is a language (`targetId`); a **client** is a concrete library or API under that language (`clientId`). Pass both to
+`convert(operationId, targetId, clientId)`.
 
-Call `convert(operationId, targetId, clientId)` — currently only `"javascript"` / `"ws"` is available.
+### Available now
+
+| `targetId`   | `clientId`   | Runtime              | Handshake headers | Notes                                                                 |
+| ------------ | ------------ | -------------------- | ----------------- | --------------------------------------------------------------------- |
+| `javascript` | `ws`         | Node.js              | Yes                | Default JS client. Requires the [`ws`](https://github.com/websockets/ws) package. |
+| `javascript` | `websocket`  | Browser              | No                 | WHATWG `WebSocket` — no dependency. Header bindings are omitted with a comment in the snippet; use `ws` when auth needs headers. |
+| `python`     | `websockets` | Python 3 (asyncio)   | Yes                | Default Python client. Requires the [`websockets`](https://websockets.readthedocs.io/) package. |
+
+Examples:
+
+```js
+snippet.convert("sendMessage", "javascript", "ws");
+snippet.convert("sendMessage", "javascript", "websocket");
+snippet.convert("sendMessage", "python", "websockets");
+```
+
+### Planned
+
+| Protocol                  | Language   | Client              |
+| ------------------------- | ---------- | ------------------- |
+| WebSocket                 | Rust       | `tokio-tungstenite` |
+| WebSocket                 | Go         | `gorilla/websocket` |
+| Kafka / MQTT / AMQP / SSE | —          | —                   |
+
+### Custom targets
+
+Targets/clients are registered via `addTarget` / `addTargetClient` (`asyncsnippet` exports both), so you can add your own without forking the library. See [CONTRIBUTING.md](./CONTRIBUTING.md) for the contract.
+
+### Discovering supported targets at runtime
+
+The tables above are only accurate for the version of `asyncsnippet` they were written against. To build something dynamic (a picker UI, a CLI `--list` flag, validation before calling `convert()`), call `getSupportedTargets()` instead of hardcoding ids — it reflects exactly what's registered in the running process, including any custom targets/clients added via `addTarget` / `addTargetClient`:
+
+```js
+import { getSupportedTargets } from "asyncsnippet";
+
+for (const target of getSupportedTargets()) {
+  console.log(`${target.title} (default: ${target.default})`);
+  for (const client of target.clients) {
+    console.log(`  - ${client.title} [${client.protocol}] (${client.key})`);
+  }
+}
+```
+
+```
+JavaScript (default: ws)
+  - ws [ws] (ws)
+  - WebSocket (browser) [ws] (websocket)
+Python (default: websockets)
+  - websockets [ws] (websockets)
+```
+
+Each client's `protocol` is the AsyncAPI channel binding it generates code for (currently always `"ws"` — Kafka/MQTT/AMQP/SSE won't appear here until those clients exist).
 
 ## License
 
