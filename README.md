@@ -85,6 +85,8 @@ Deliberately narrow — see the design doc for the full reasoning:
 
 ## Development
 
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for setup, adding targets/clients, and releases.
+
 ```sh
 npm install
 npm run build   # tsdown -> dist/

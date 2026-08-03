@@ -50,11 +50,11 @@ compresses most of these to well under that). **Priority** is now / next / later
   isn't already on npm; skip otherwise.
   **Effort: S. Priority: now.**
 
-- [ ] **CHANGELOG.md.** Two versions shipped (`0.1.0`→`0.1.1`) with no record
+- [x] **CHANGELOG.md.** Two versions shipped (`0.1.0`→`0.1.1`) with no record
   of what changed. Cheap to start now, expensive to reconstruct later.
   **Effort: S. Priority: now.**
 
-- [ ] **CONTRIBUTING.md.** If target support (below) grows via community PRs
+- [x] **CONTRIBUTING.md.** If target support (below) grows via community PRs
   the way httpsnippet's did, contributors need the `addTarget`-equivalent
   contract spelled out before they can add one. Write this alongside
   whichever target work happens first, not before. **Effort: S. Priority: next.**
