@@ -3,6 +3,8 @@ import type { CodeBuilderOptions } from "../helpers/code-builder.js";
 import type { Request } from "../request.js";
 
 import { isProtocolCompatible } from "../request.js";
+import { kafka as agentKafka } from "./agent/kafka/client.js";
+import { ws as agentWs } from "./agent/ws/client.js";
 import { tokioTungstenite } from "./rust/tokio-tungstenite/client.js";
 import { rdkafka } from "./rust/rdkafka/client.js";
 import { websockets as pythonWebsockets } from "./python/websockets/client.js";
@@ -124,6 +126,14 @@ export function getCompatibleTargets(
   }
   return results;
 }
+
+// Registered first so it sorts first in `getSupportedTargets()`/
+// `getCompatibleTargets()` (insertion order) — consumers building a picker
+// off those (e.g. apiuikit's playground) naturally list it, and default to
+// it, before the code-sample targets.
+addTarget({ info: { key: "agent", title: "Agent Prompt", default: "ws" }, clientsById: {} });
+addTargetClient("agent", agentWs);
+addTargetClient("agent", agentKafka);
 
 addTarget({ info: { key: "javascript", title: "JavaScript", default: "ws" }, clientsById: {} });
 addTargetClient("javascript", ws);

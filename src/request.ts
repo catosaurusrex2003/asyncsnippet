@@ -1,9 +1,11 @@
 import type {
   AsyncApiDocument,
   Channel,
+  Info,
   Message,
   Operation,
   Ref,
+  SecurityScheme,
   Server,
 } from "./asyncapi-types.js";
 
@@ -15,7 +17,24 @@ import {
 } from "./errors.js";
 import { deref } from "./helpers/deref.js";
 import { generateExampleFromSchema } from "./helpers/schema-example.js";
+import { resolveSchemaDeep } from "./helpers/schema-deref.js";
 import { resolveRawObjectSchema, resolveSchemaField } from "./helpers/schema-value.js";
+import { resolveServerSecurity } from "./helpers/security.js";
+
+/** A single server the operation is reachable through, resolved with its
+ * name (its key in `document.servers`, or the trailing `$ref` segment for an
+ * operation/channel-scoped override) and its own `security`, fully dereffed —
+ * for a human/agent-facing summary that (unlike `serverUrl`/`serverHost`)
+ * doesn't collapse to just the one server this client's protocol matched. */
+export interface ResolvedServer {
+  name: string;
+  host: string;
+  protocol: string;
+  pathname?: string;
+  url: string;
+  description?: string;
+  security: SecurityScheme[];
+}
 
 export interface Request {
   operationId: string;
@@ -30,19 +49,46 @@ export interface Request {
   /** Raw `server.host`, with no protocol scheme prefix — e.g. a Kafka broker list (`broker1:9092,broker2:9092`). Clients that need a broker list (rather than a URL) should split this, not `serverUrl`. */
   serverHost: string;
 
+  /** Every server the operation is reachable through (same set used for protocol eligibility), each with its own resolved `security` — unlike `serverUrl`/`serverHost`, not collapsed to just the one server matching this client's protocol. */
+  servers: ResolvedServer[];
+
   /** Channel address with `{param}` placeholders substituted using the literal-value resolution rule. For `ws`, this is a URL path; for `kafka`, this is the topic name (after any `bindings.kafka.topic` override). */
   channelAddress: string;
+
+  /** Channel address exactly as declared (`{param}` placeholders left in), for display purposes — `channelAddress` is the one to actually connect to/publish on. */
+  channelTemplate: string;
 
   query: Record<string, string>;
   headers: Record<string, string>;
 
+  /** The operation's own `summary`/`description`, when the document declares them. */
+  operationSummary?: string;
+  operationDescription?: string;
+
   message: {
+    /** Explicit example's `name`, when the message has one. */
     name?: string;
+    /** Resolved/generated example payload — see `placeholders` for whether it came from an explicit example or was synthesized from `payloadSchema`. */
     payload: unknown;
+    /** The message's own `title`/`summary`/`description`/`contentType`, when the document declares them. */
+    title?: string;
+    summary?: string;
+    description?: string;
+    contentType?: string;
+    /** Raw payload JSON Schema, fully dereffed — the schema `payload` above was generated from (if it was), for callers that want to describe constraints/types rather than show a single example. */
+    payloadSchema?: unknown;
+    /** Raw headers JSON Schema (e.g. Kafka message headers), fully dereffed, when the message declares one. */
+    headersSchema?: unknown;
   };
 
   /** Fields that couldn't be resolved from `default`/`examples` and were filled with a `<placeholder>` — surfaced as a comment in generated snippets. */
   placeholders: string[];
+
+  /** The document's `info` object (title/version/description/license), when the document declares one — mainly useful for a human/agent-facing summary rather than a runnable snippet. */
+  info?: Info;
+
+  /** The resolved (matched) server's `security` list, fully dereffed against `document.components.securitySchemes`. Empty when the server declares no security (or none of it resolves) — this library has no notion of "no auth required" vs. "auth info unavailable", same as every other unresolved field. See `servers` for every reachable server's own security, not just this one. */
+  security: SecurityScheme[];
 
   /** Present only when `protocol === "kafka"`. `key` is omitted (stays `undefined`) if the message declares no `kafka.key` binding at all — unkeyed messages are normal in Kafka. `clientId` is always resolved (placeholder if undeclared). `groupId` is only resolved for `action === "receive"` (consumer-only concept). */
   kafka?: {
@@ -68,21 +114,50 @@ function normalizeProtocol(protocol: string): string {
   return PROTOCOL_ALIASES[protocol] ?? protocol;
 }
 
+function isRef(value: unknown): value is Ref {
+  return typeof value === "object" && value !== null && typeof (value as Ref).$ref === "string";
+}
+
+/** Last path segment of a `$ref`, e.g. `"#/servers/production"` → `"production"` — used as a display name when a server/message is only reachable via an operation/channel-scoped ref rather than by iterating the document's own name-keyed map. */
+function refSegment(ref: string): string {
+  return ref.slice(ref.lastIndexOf("/") + 1);
+}
+
+interface NamedServer {
+  name: string;
+  server: Server;
+}
+
 /** Resolves every server a channel/operation is reachable through: the
  * explicit `operation.servers`/`channel.servers` ref list when either is
  * given, otherwise every server in the document — per AsyncAPI 3.x, omitting
  * `servers` means "reachable through all of them". Refs that don't resolve
  * are dropped rather than thrown; a dangling ref here shouldn't block
- * generation when another server already tells us the protocol. */
+ * generation when another server already tells us the protocol. Each
+ * resolved server keeps its name (its key in `document.servers`, or the
+ * trailing `$ref` segment for an operation/channel-scoped override) for
+ * display purposes. */
 function resolveServers(
   document: AsyncApiDocument,
   serverRefs: Array<Server | Ref> | undefined,
-): Server[] {
-  const refs =
-    serverRefs && serverRefs.length > 0 ? serverRefs : Object.values(document.servers ?? {});
-  return refs
-    .map((ref) => deref<Server>(document, ref))
-    .filter((server): server is Server => Boolean(server));
+): NamedServer[] {
+  if (serverRefs && serverRefs.length > 0) {
+    return serverRefs
+      .map((ref) => {
+        const server = deref<Server>(document, ref);
+        if (!server) {
+          return undefined;
+        }
+        return { name: isRef(ref) ? refSegment(ref.$ref) : "", server };
+      })
+      .filter((entry): entry is NamedServer => Boolean(entry));
+  }
+  return Object.entries(document.servers ?? {})
+    .map(([name, ref]) => {
+      const server = deref<Server>(document, ref);
+      return server ? { name, server } : undefined;
+    })
+    .filter((entry): entry is NamedServer => Boolean(entry));
 }
 
 /** Resolves an operationId to its operation and channel, throwing the same
@@ -109,8 +184,8 @@ function resolveOperationAndChannel(
 }
 
 interface Eligibility {
-  servers: Server[];
-  matchedServer: Server | undefined;
+  servers: NamedServer[];
+  matchedServer: NamedServer | undefined;
   eligible: boolean;
 }
 
@@ -126,7 +201,7 @@ function computeEligibility(
 ): Eligibility {
   const servers = resolveServers(document, operation.servers ?? channel.servers);
   const matchedServer = servers.find(
-    (candidate) => normalizeProtocol(candidate.protocol) === protocol,
+    (candidate) => normalizeProtocol(candidate.server.protocol) === protocol,
   );
   const explicitBinding = (channel.bindings as Record<string, unknown> | undefined)?.[protocol];
 
@@ -208,7 +283,8 @@ export function buildRequest(
     kafkaTopicOverride = channel.bindings?.kafka?.topic;
   }
 
-  let channelAddress = channel.address ?? "";
+  const channelTemplate = channel.address ?? "";
+  let channelAddress = channelTemplate;
   for (const [paramId, param] of Object.entries(channel.parameters ?? {})) {
     const resolved = resolveSchemaField(param, paramId);
     channelAddress = channelAddress.replace(`{${paramId}}`, resolved.value);
@@ -226,17 +302,26 @@ export function buildRequest(
   // Falls back to the first resolved server for the binding-only eligibility
   // case (no server matched at all), matching the previous single-server
   // behavior.
-  const server = matchedServer ?? servers[0];
+  const server = (matchedServer ?? servers[0])?.server;
   const serverUrl = server ? `${server.protocol}://${server.host}${server.pathname ?? ""}` : "";
   const serverHost = server?.host ?? "";
+  const security = resolveServerSecurity(document, server?.security);
+  const resolvedServers: ResolvedServer[] = servers.map(({ name, server: candidate }) => ({
+    name,
+    host: candidate.host,
+    protocol: candidate.protocol,
+    pathname: candidate.pathname,
+    url: `${candidate.protocol}://${candidate.host}${candidate.pathname ?? ""}`,
+    description: candidate.description,
+    security: resolveServerSecurity(document, candidate.security),
+  }));
 
   // Operation.messages is optional: omitting it means all channel messages apply
   // (AsyncAPI 3.x). An explicit `[]` means no messages.
-  const messages =
+  const message =
     operation.messages !== undefined
-      ? operation.messages.map((ref) => deref<Message>(document, ref))
-      : Object.values(channel.messages ?? {}).map((msg) => deref<Message>(document, msg));
-  const message = messages[0];
+      ? deref<Message>(document, operation.messages[0])
+      : deref<Message>(document, Object.values(channel.messages ?? {})[0]);
   const explicitExample = message?.examples?.[0];
 
   let exampleName: string | undefined;
@@ -254,6 +339,11 @@ export function buildRequest(
   } else {
     throw new MissingExampleError(operationId);
   }
+
+  const payloadSchema =
+    message?.payload !== undefined ? resolveSchemaDeep(document, message.payload) : undefined;
+  const headersSchema =
+    message?.headers !== undefined ? resolveSchemaDeep(document, message.headers) : undefined;
 
   const action = operation.action === "send" ? "send" : "receive";
 
@@ -291,14 +381,26 @@ export function buildRequest(
     protocol,
     serverUrl,
     serverHost,
+    servers: resolvedServers,
     channelAddress,
+    channelTemplate,
     query,
     headers,
+    operationSummary: operation.summary,
+    operationDescription: operation.description,
     message: {
       name: exampleName,
       payload: examplePayload,
+      title: message?.title ?? message?.name,
+      summary: message?.summary,
+      description: message?.description,
+      contentType: message?.contentType,
+      payloadSchema,
+      headersSchema,
     },
     placeholders,
+    info: document.info,
+    security,
     ...(kafka ? { kafka } : {}),
   };
 }

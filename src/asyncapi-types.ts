@@ -13,6 +13,56 @@ export interface Server {
   host: string;
   protocol: string;
   pathname?: string;
+  description?: string;
+  security?: Array<SecurityScheme | Ref>;
+}
+
+export interface Info {
+  title?: string;
+  version?: string;
+  description?: string;
+  license?: {
+    name?: string;
+    url?: string;
+  };
+}
+
+/** AsyncAPI 3.x security scheme `type` values this library recognizes. */
+export type SecuritySchemeType =
+  | "userPassword"
+  | "apiKey"
+  | "X509"
+  | "symmetricEncryption"
+  | "asymmetricEncryption"
+  | "httpApiKey"
+  | "http"
+  | "oauth2"
+  | "openIdConnect"
+  | "plain"
+  | "scramSha256"
+  | "scramSha512"
+  | "gssapi";
+
+export interface OAuth2Flow {
+  authorizationUrl?: string;
+  tokenUrl?: string;
+  refreshUrl?: string;
+  scopes?: Record<string, string>;
+}
+
+/** Partial AsyncAPI 3.x Security Scheme Object — only the fields needed to describe auth in a human/agent-facing summary, not to actually perform authentication. */
+export interface SecurityScheme {
+  type: SecuritySchemeType;
+  description?: string;
+  /** `apiKey`/`httpApiKey`: the header/query/cookie parameter name. */
+  name?: string;
+  /** `apiKey`/`httpApiKey`: where the key is sent (`user`, `password`, `query`, `header`, `cookie`). */
+  in?: string;
+  /** `http`: `"basic"` | `"bearer"`, etc. */
+  scheme?: string;
+  bearerFormat?: string;
+  openIdConnectUrl?: string;
+  flows?: Record<string, OAuth2Flow>;
 }
 
 export interface Parameter {
@@ -59,7 +109,15 @@ export interface MessageBindings {
 }
 
 export interface Message {
+  /** Machine-readable message name, e.g. `"lightMeasured"` — falls back for display when `title` isn't declared. */
+  name?: string;
+  title?: string;
+  summary?: string;
+  description?: string;
+  contentType?: string;
   payload?: unknown;
+  /** Raw JSON Schema for message headers (e.g. Kafka message headers) — separate from the `ws` binding's `headers`, which only covers WebSocket handshake headers. */
+  headers?: unknown;
   examples?: MessageExample[];
   bindings?: MessageBindings;
 }
@@ -80,10 +138,17 @@ export interface Operation {
   messages?: Ref[];
   servers?: Ref[];
   bindings?: OperationBindings;
+  summary?: string;
+  description?: string;
 }
 
 export interface AsyncApiDocument {
+  info?: Info;
   servers?: Record<string, Server | Ref>;
   channels?: Record<string, Channel | Ref>;
   operations?: Record<string, Operation | Ref>;
+  components?: {
+    schemas?: Record<string, unknown>;
+    securitySchemes?: Record<string, SecurityScheme | Ref>;
+  };
 }
