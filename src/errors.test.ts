@@ -71,9 +71,14 @@ describe("error paths", () => {
     );
   });
 
-  it("throws MissingBindingError when the channel has no ws binding", () => {
+  it("throws MissingBindingError when neither the server's protocol nor an explicit binding matches ws", () => {
+    // Server protocol is unrelated to ws ("kafka"), and the channel declares
+    // no explicit ws binding — no signal at all that this channel speaks ws.
     const document: AsyncApiDocument = {
       ...baseDocument,
+      servers: {
+        production: { host: "ping.example.com", protocol: "kafka" },
+      },
       channels: {
         ping: {
           ...baseDocument.channels!.ping,
@@ -84,19 +89,21 @@ describe("error paths", () => {
     const snippet = new AsyncSnippet(document);
     expect(() => snippet.convert("sendPing", "javascript", "ws")).toThrow(MissingBindingError);
     expect(() => snippet.convert("sendPing", "javascript", "ws")).toThrow(
-      /Operation "sendPing" has no "ws" channel binding/,
+      /Operation "sendPing" is not reachable over "ws"/,
     );
   });
 
-  it("throws MissingBindingError when the channel has no kafka binding", () => {
+  it("throws MissingBindingError when neither the server's protocol nor an explicit binding matches kafka", () => {
+    // baseDocument's server is "wss" (normalizes to ws, not kafka), and its
+    // channel only declares an explicit ws binding — no kafka signal either.
     const snippet = new AsyncSnippet(baseDocument);
     expect(() => snippet.convert("sendPing", "javascript", "kafkajs")).toThrow(MissingBindingError);
     expect(() => snippet.convert("sendPing", "javascript", "kafkajs")).toThrow(
-      /Operation "sendPing" has no "kafka" channel binding/,
+      /Operation "sendPing" is not reachable over "kafka"/,
     );
   });
 
-  it("throws MissingExampleError when the message has no examples entry", () => {
+  it("throws MissingExampleError when the message has neither an examples entry nor a payload schema", () => {
     const document: AsyncApiDocument = {
       ...baseDocument,
       channels: {
@@ -111,7 +118,25 @@ describe("error paths", () => {
     const snippet = new AsyncSnippet(document);
     expect(() => snippet.convert("sendPing", "javascript", "ws")).toThrow(MissingExampleError);
     expect(() => snippet.convert("sendPing", "javascript", "ws")).toThrow(
-      /Operation "sendPing"'s message has no "examples" entry/,
+      /Operation "sendPing"'s message has no "examples" entry, and no "payload" schema/,
     );
+  });
+
+  it("throws MissingExampleError when the payload schema has no recognizable type to generate from", () => {
+    const document: AsyncApiDocument = {
+      ...baseDocument,
+      channels: {
+        ping: {
+          ...baseDocument.channels!.ping,
+          messages: {
+            pingMessage: {
+              payload: { oneOf: [{ type: "string" }, { type: "number" }] },
+            },
+          },
+        },
+      },
+    };
+    const snippet = new AsyncSnippet(document);
+    expect(() => snippet.convert("sendPing", "javascript", "ws")).toThrow(MissingExampleError);
   });
 });

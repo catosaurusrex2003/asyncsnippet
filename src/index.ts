@@ -2,14 +2,26 @@ import type { AsyncApiDocument } from "./asyncapi-types.js";
 import type { CodeBuilderOptions } from "./helpers/code-builder.js";
 
 import { UnsupportedTargetError } from "./errors.js";
-import { buildRequest } from "./request.js";
-import { addTarget, addTargetClient, getSupportedTargets, targets } from "./targets/index.js";
+import { buildRequest, isProtocolCompatible } from "./request.js";
+import {
+  addTarget,
+  addTargetClient,
+  getCompatibleTargets,
+  getSupportedTargets,
+  targets,
+} from "./targets/index.js";
 
 export type { AsyncApiDocument } from "./asyncapi-types.js";
 export type { Request } from "./request.js";
 export type { Client, ClientInfo, SupportedTarget, Target } from "./targets/index.js";
 export * from "./errors.js";
-export { addTarget, addTargetClient, getSupportedTargets };
+export {
+  addTarget,
+  addTargetClient,
+  getCompatibleTargets,
+  getSupportedTargets,
+  isProtocolCompatible,
+};
 
 export type Options = CodeBuilderOptions;
 
