@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 
-import { addTarget, addTargetClient, getSupportedTargets, targets } from "./index.js";
+import type { AsyncApiDocument } from "../asyncapi-types.js";
+import {
+  addTarget,
+  addTargetClient,
+  getCompatibleTargets,
+  getSupportedTargets,
+  targets,
+} from "./index.js";
 
 describe("target/client registry", () => {
   it("ships the default javascript, python, rust, and go targets", () => {
@@ -11,12 +18,14 @@ describe("target/client registry", () => {
       expect.arrayContaining(["ws", "websocket", "kafkajs"]),
     );
     expect(Object.keys(targets.python!.clientsById)).toEqual(
-      expect.arrayContaining(["websockets"]),
+      expect.arrayContaining(["websockets", "confluent-kafka"]),
     );
     expect(Object.keys(targets.rust!.clientsById)).toEqual(
-      expect.arrayContaining(["tokio-tungstenite"]),
+      expect.arrayContaining(["tokio-tungstenite", "rdkafka"]),
     );
-    expect(Object.keys(targets.go!.clientsById)).toEqual(expect.arrayContaining(["gorilla"]));
+    expect(Object.keys(targets.go!.clientsById)).toEqual(
+      expect.arrayContaining(["gorilla", "kafka-go"]),
+    );
   });
 
   it("addTarget registers a new target", () => {
@@ -112,5 +121,92 @@ describe("getSupportedTargets", () => {
 
     const swift = getSupportedTargets().find((t) => t.key === "swift");
     expect(swift?.clients.map((c) => c.key)).toEqual(["starscream"]);
+  });
+});
+
+describe("getCompatibleTargets", () => {
+  const wsDocument: AsyncApiDocument = {
+    servers: { production: { host: "chat.example.com", protocol: "wss" } },
+    channels: {
+      chat: {
+        address: "/chat",
+        messages: { greet: { examples: [{ payload: { text: "hi" } }] } },
+      },
+    },
+    operations: {
+      sendGreeting: { action: "send", channel: { $ref: "#/channels/chat" } },
+    },
+  };
+
+  const kafkaDocument: AsyncApiDocument = {
+    servers: { production: { host: "broker.example.com:9092", protocol: "kafka-secure" } },
+    channels: {
+      events: {
+        address: "events.topic",
+        messages: { event: { examples: [{ payload: { id: 1 } }] } },
+      },
+    },
+    operations: {
+      publishEvent: { action: "send", channel: { $ref: "#/channels/events" } },
+    },
+  };
+
+  it("keeps ws-protocol clients and drops kafkajs for a ws-only operation", () => {
+    const compatible = getCompatibleTargets(wsDocument, "sendGreeting");
+    const javascript = compatible.find((t) => t.key === "javascript");
+
+    expect(javascript?.clients.map((c) => c.key)).toEqual(
+      expect.arrayContaining(["ws", "websocket"]),
+    );
+    expect(javascript?.clients.map((c) => c.key)).not.toContain("kafkajs");
+    expect(javascript?.default).toBe("ws");
+
+    const python = compatible.find((t) => t.key === "python");
+    expect(python?.clients.map((c) => c.key)).toEqual(["websockets"]);
+    const rust = compatible.find((t) => t.key === "rust");
+    expect(rust?.clients.map((c) => c.key)).toEqual(["tokio-tungstenite"]);
+    const go = compatible.find((t) => t.key === "go");
+    expect(go?.clients.map((c) => c.key)).toEqual(["gorilla"]);
+  });
+
+  it("keeps only each target's kafka client, recomputes `default` to it, and drops their ws-only clients for a kafka-only operation", () => {
+    const compatible = getCompatibleTargets(kafkaDocument, "publishEvent");
+    const javascript = compatible.find((t) => t.key === "javascript");
+    const python = compatible.find((t) => t.key === "python");
+    const rust = compatible.find((t) => t.key === "rust");
+    const go = compatible.find((t) => t.key === "go");
+
+    expect(javascript?.clients.map((c) => c.key)).toEqual(["kafkajs"]);
+    // The registered target-level default is "ws" (see the registry setup at
+    // the bottom of index.ts) — it's not itself compatible with a
+    // kafka-only operation, so it must not leak through unchanged.
+    expect(javascript?.default).toBe("kafkajs");
+
+    expect(python?.clients.map((c) => c.key)).toEqual(["confluent-kafka"]);
+    expect(python?.default).toBe("confluent-kafka");
+    expect(rust?.clients.map((c) => c.key)).toEqual(["rdkafka"]);
+    expect(rust?.default).toBe("rdkafka");
+    expect(go?.clients.map((c) => c.key)).toEqual(["kafka-go"]);
+    expect(go?.default).toBe("kafka-go");
+  });
+
+  it("returns an empty array for an unknown operationId", () => {
+    expect(getCompatibleTargets(wsDocument, "doesNotExist")).toEqual([]);
+  });
+
+  it("returns an empty array when no registered client's protocol matches (e.g. an mqtt-only operation)", () => {
+    const document: AsyncApiDocument = {
+      servers: { production: { host: "broker.example.com", protocol: "mqtt" } },
+      channels: {
+        events: {
+          address: "events/topic",
+          messages: { event: { examples: [{ payload: { id: 1 } }] } },
+        },
+      },
+      operations: {
+        publishEvent: { action: "send", channel: { $ref: "#/channels/events" } },
+      },
+    };
+    expect(getCompatibleTargets(document, "publishEvent")).toEqual([]);
   });
 });

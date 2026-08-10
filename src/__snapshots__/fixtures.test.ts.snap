@@ -230,6 +230,79 @@ func main() {
 }"
 `;
 
+exports[`fixtures (snapshot) — go/kafka-go > kafka.yaml — receive operation reads, without writing 1`] = `
+"package main
+
+import (
+	"context"
+	"log"
+
+	"github.com/segmentio/kafka-go"
+)
+
+func main() {
+	reader := kafka.NewReader(kafka.ReaderConfig{
+		Brokers: []string{"broker1.example.com:9092", "broker2.example.com:9092"},
+		Topic:   "order.events.v1",
+		GroupID: "order-processing-service",
+	})
+	defer reader.Close()
+
+	// Example message shape for this operation ("sampleOrderCreated"):
+	// {
+	//   "orderId": "order-42",
+	//   "total": 59.99
+	// }
+
+	for {
+		message, err := reader.ReadMessage(context.Background())
+		if err != nil {
+			log.Println("read:", err)
+			return
+		}
+		log.Println(string(message.Value))
+	}
+}"
+`;
+
+exports[`fixtures (snapshot) — go/kafka-go > kafka.yaml — send operation resolves the topic override and message key 1`] = `
+"package main
+
+import (
+	"context"
+	"encoding/json"
+	"log"
+
+	"github.com/segmentio/kafka-go"
+)
+
+func main() {
+	writer := &kafka.Writer{
+		Addr:     kafka.TCP("broker1.example.com:9092", "broker2.example.com:9092"),
+		Topic:    "order.events.v1",
+		Balancer: &kafka.LeastBytes{},
+	}
+	defer writer.Close()
+
+	payload := map[string]interface{}{
+		"orderId": "order-42",
+		"total": 59.99,
+	}
+
+	data, err := json.Marshal(payload)
+	if err != nil {
+		log.Fatal("marshal:", err)
+	}
+
+	message := kafka.Message{Value: data}
+	message.Key = []byte("order-42")
+
+	if err := writer.WriteMessages(context.Background(), message); err != nil {
+		log.Fatal("write:", err)
+	}
+}"
+`;
+
 exports[`fixtures (snapshot) — javascript/kafkajs > kafka.yaml — receive operation subscribes and consumes, without sending 1`] = `
 "import { Kafka } from 'kafkajs';
 
@@ -344,6 +417,64 @@ socket.addEventListener('message', (event) => {
 });"
 `;
 
+exports[`fixtures (snapshot) — python/confluent-kafka > kafka.yaml — receive operation subscribes and polls, without producing 1`] = `
+"import json
+
+from confluent_kafka import Consumer
+
+
+consumer = Consumer({
+    "bootstrap.servers": "broker1.example.com:9092,broker2.example.com:9092",
+    "group.id": "order-processing-service",
+    "client.id": "order-service-consumer",
+    "auto.offset.reset": "earliest",
+})
+
+# Example message shape for this operation ("sampleOrderCreated"):
+# {
+#   "orderId": "order-42",
+#   "total": 59.99
+# }
+
+consumer.subscribe(["order.events.v1"])
+
+try:
+    while True:
+        msg = consumer.poll(1.0)
+        if msg is None:
+            continue
+        if msg.error():
+            print(msg.error())
+            continue
+        print(msg.value().decode('utf-8'))
+finally:
+    consumer.close()"
+`;
+
+exports[`fixtures (snapshot) — python/confluent-kafka > kafka.yaml — send operation resolves the topic override and message key 1`] = `
+"import json
+
+from confluent_kafka import Producer
+
+
+producer = Producer({
+    "bootstrap.servers": "broker1.example.com:9092,broker2.example.com:9092",
+    "client.id": "order-service-producer",
+})
+
+payload = json.dumps({
+    "orderId": "order-42",
+    "total": 59.99,
+})
+
+producer.produce(
+    "order.events.v1",
+    value=payload.encode('utf-8'),
+    key="order-42",
+)
+producer.flush()"
+`;
+
 exports[`fixtures (snapshot) — python/websockets > pubsub.yaml — receive-only operation uses async for 1`] = `
 "# NOTE: some values could not be resolved from the AsyncAPI document's
 # default/examples and were filled with a placeholder — replace them
@@ -421,6 +552,71 @@ async def main() -> None:
 
 
 asyncio.run(main())"
+`;
+
+exports[`fixtures (snapshot) — rust/rdkafka > kafka.yaml — receive operation subscribes and streams, without producing 1`] = `
+"use rdkafka::config::ClientConfig;
+use rdkafka::consumer::{Consumer, StreamConsumer};
+use rdkafka::Message;
+use futures_util::StreamExt;
+
+
+// Example message shape for this operation ("sampleOrderCreated"):
+// {
+//   "orderId": "order-42",
+//   "total": 59.99
+// }
+
+#[tokio::main]
+async fn main() {
+    let consumer: StreamConsumer = ClientConfig::new()
+        .set("bootstrap.servers", "broker1.example.com:9092,broker2.example.com:9092")
+        .set("group.id", "order-processing-service")
+        .set("client.id", "order-service-consumer")
+        .set("auto.offset.reset", "earliest")
+        .create()
+        .expect("Failed to create consumer");
+
+    consumer.subscribe(&["order.events.v1"]).expect("Failed to subscribe");
+
+    let mut stream = consumer.stream();
+    while let Some(message) = stream.next().await {
+        let message = message.expect("Failed to read message");
+        if let Some(payload) = message.payload_view::<str>().and_then(Result::ok) {
+            println!("{}", payload);
+        }
+    }
+}"
+`;
+
+exports[`fixtures (snapshot) — rust/rdkafka > kafka.yaml — send operation resolves the topic override and message key 1`] = `
+"use rdkafka::config::ClientConfig;
+use rdkafka::producer::{FutureProducer, FutureRecord};
+use std::time::Duration;
+
+
+#[tokio::main]
+async fn main() {
+    let producer: FutureProducer = ClientConfig::new()
+        .set("bootstrap.servers", "broker1.example.com:9092,broker2.example.com:9092")
+        .set("client.id", "order-service-producer")
+        .create()
+        .expect("Failed to create producer");
+
+    let payload = serde_json::json!({
+      "orderId": "order-42",
+      "total": 59.99
+    });
+
+    let record = FutureRecord::to("order.events.v1")
+        .payload(&payload.to_string())
+        .key("order-42");
+
+    producer
+        .send(record, Duration::from_secs(0))
+        .await
+        .expect("Failed to send message");
+}"
 `;
 
 exports[`fixtures (snapshot) — rust/tokio-tungstenite > pubsub.yaml — receive-only operation loops over read without sending 1`] = `
@@ -510,4 +706,45 @@ async fn main() {
         println!("{}", msg.expect("Failed to read message"));
     }
 }"
+`;
+
+exports[`fixtures (snapshot) — schema-generated examples > schema-generated.yaml — kafka-secure server, no explicit bindings or examples, resolves entirely from protocol derivation + schema generation 1`] = `
+"// NOTE: some values could not be resolved from the AsyncAPI document's
+// default/examples and were filled with a placeholder — replace them
+// with real values before running this snippet:
+//   - message payload (no explicit example — generated from its schema)
+//   - kafka clientId
+//   - kafka consumer group id
+
+import { Kafka } from 'kafkajs';
+
+const kafka = new Kafka({
+  clientId: '<kafka clientId>',
+  brokers: ['broker.example.com:9092'],
+});
+
+const consumer = kafka.consumer({ groupId: '<kafka consumer group id>' });
+
+// Example message shape for this operation:
+// {
+//   "lumens": 0,
+//   "sentAt": "2024-01-01T00:00:00Z",
+//   "tags": [
+//     "string"
+//   ],
+//   "status": "on"
+// }
+
+async function main() {
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'lighting.measured', fromBeginning: true });
+
+  await consumer.run({
+    eachMessage: async ({ message }) => {
+      console.log(message.value?.toString());
+    },
+  });
+}
+
+main();"
 `;

@@ -1,11 +1,16 @@
+import type { AsyncApiDocument } from "../asyncapi-types.js";
 import type { CodeBuilderOptions } from "../helpers/code-builder.js";
 import type { Request } from "../request.js";
 
+import { isProtocolCompatible } from "../request.js";
 import { tokioTungstenite } from "./rust/tokio-tungstenite/client.js";
+import { rdkafka } from "./rust/rdkafka/client.js";
 import { websockets as pythonWebsockets } from "./python/websockets/client.js";
+import { confluentKafka } from "./python/confluent-kafka/client.js";
 import { websocket } from "./javascript/websocket/client.js";
 import { kafkajs } from "./javascript/kafkajs/client.js";
 import { gorilla } from "./go/gorilla/client.js";
+import { kafkaGo } from "./go/kafka-go/client.js";
 import { ws } from "./javascript/ws/client.js";
 
 export interface ClientInfo {
@@ -88,6 +93,38 @@ export function getSupportedTargets(): SupportedTarget[] {
   }));
 }
 
+/**
+ * Like {@link getSupportedTargets}, but filtered to only the targets/clients
+ * whose protocol is actually reachable for `operationId` in `document` (via
+ * {@link isProtocolCompatible}) — the data source for a dropdown that
+ * shouldn't offer options guaranteed to fail `convert()`. A target left with
+ * zero compatible clients after filtering is dropped entirely, rather than
+ * returned with an empty `clients` array.
+ *
+ * Each surviving target's `default` is recomputed to its first surviving
+ * client's key: the registered target-level default from
+ * `getSupportedTargets()` (e.g. `javascript`'s is always `"ws"`) may itself
+ * not be protocol-compatible for this operation — for a Kafka-only
+ * operation, `javascript`'s surviving `default` here is `"kafkajs"`, not
+ * `"ws"`. Don't assume it matches `getSupportedTargets()`'s `default` for
+ * the same target.
+ */
+export function getCompatibleTargets(
+  document: AsyncApiDocument,
+  operationId: string,
+): SupportedTarget[] {
+  const results: SupportedTarget[] = [];
+  for (const target of getSupportedTargets()) {
+    const clients = target.clients.filter((client) =>
+      isProtocolCompatible(document, operationId, client.protocol),
+    );
+    if (clients.length > 0) {
+      results.push({ ...target, default: clients[0]!.key, clients });
+    }
+  }
+  return results;
+}
+
 addTarget({ info: { key: "javascript", title: "JavaScript", default: "ws" }, clientsById: {} });
 addTargetClient("javascript", ws);
 addTargetClient("javascript", websocket);
@@ -95,9 +132,12 @@ addTargetClient("javascript", kafkajs);
 
 addTarget({ info: { key: "python", title: "Python", default: "websockets" }, clientsById: {} });
 addTargetClient("python", pythonWebsockets);
+addTargetClient("python", confluentKafka);
 
 addTarget({ info: { key: "rust", title: "Rust", default: "tokio-tungstenite" }, clientsById: {} });
 addTargetClient("rust", tokioTungstenite);
+addTargetClient("rust", rdkafka);
 
 addTarget({ info: { key: "go", title: "Go", default: "gorilla" }, clientsById: {} });
 addTargetClient("go", gorilla);
+addTargetClient("go", kafkaGo);

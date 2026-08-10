@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Kafka clients for every existing target, not just `javascript`: `python`/`confluent-kafka` (librdkafka-backed), `rust`/`rdkafka` (Tokio async/await), `go`/`kafka-go` (pure Go, no cgo). Same producer/consumer semantics as `javascript`/`kafkajs` — topic override, message key, consumer `groupId`/`clientId` resolution. None of these change their target's default client (`python` stays `websockets`, `rust` stays `tokio-tungstenite`, `go` stays `gorilla`).
+- Schema-generated message payloads: when a message has no explicit `examples` entry, `convert()` now generates a representative payload from its `payload` JSON Schema (object/array recursion, format-aware strings, `$ref` resolution, `enum`/`const`/`default`) instead of throwing. `MissingExampleError` now only fires when there's neither an explicit example nor a usable payload schema. Generated payloads are flagged in the snippet's placeholder comment, distinguishing them from real document-authored examples.
+- `isProtocolCompatible(document, operationId, protocol)` and `getCompatibleTargets(document, operationId)` — check/filter target-registry entries down to only those actually reachable for a given operation's channel, so a picker UI built on `getSupportedTargets()` doesn't have to offer options guaranteed to fail `convert()` (e.g. WebSocket clients for a Kafka-only operation). Never throw; an unresolvable operation/channel just resolves to `false`/`[]`.
+
+### Fixed
+
+- Protocol eligibility no longer requires an explicit `channel.bindings[protocol]` object. Most real-world Kafka channels never declare `channel.bindings.kafka` (it's only needed for a topic override), which meant `convert()` rejected nearly every real Kafka document with `MissingBindingError` even though the server clearly declared `protocol: kafka`. Eligibility is now derived from the channel's resolved server(s) first, falling back to explicit binding presence only when no server confirms the protocol.
+- Secure-transport protocol variants (`kafka-secure`, `wss`) now normalize to their base protocol (`kafka`, `ws`) for eligibility purposes — a server declaring `protocol: kafka-secure` is now recognized as Kafka. The document's own protocol string is unaffected elsewhere (still shown as-is, e.g. `kafka-secure://...`, in generated snippets).
+- A channel reachable through multiple servers of different protocols now uses the server that actually matches the requested client's protocol for the generated URL/host, instead of always the first listed server.
+
 ## [0.1.5] - 2026-08-03
 
 ### Added

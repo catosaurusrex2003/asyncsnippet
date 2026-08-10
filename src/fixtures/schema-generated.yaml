@@ -1,0 +1,48 @@
+asyncapi: 3.0.0
+info:
+  title: Streetlights-style Service
+  version: 1.0.0
+# Deliberately mirrors the AsyncAPI spec's own Streetlights examples: a
+# `kafka-secure` server, no explicit channel/operation kafka bindings, and no
+# message-level `examples` — every dynamic value here comes from protocol
+# eligibility derivation (see "Protocol eligibility" in the README) and
+# schema-generated examples, not from anything explicit in the document.
+servers:
+  production:
+    host: broker.example.com:9092
+    protocol: kafka-secure
+channels:
+  lightingMeasured:
+    address: lighting.measured
+    messages:
+      lightMeasured:
+        summary: Environmental lighting conditions of a streetlight.
+        payload:
+          type: object
+          properties:
+            lumens:
+              type: integer
+              minimum: 0
+              description: Light intensity measured in lumens.
+            sentAt:
+              $ref: '#/components/schemas/sentAt'
+            tags:
+              type: array
+              items:
+                type: string
+            status:
+              type: string
+              enum:
+                - on
+                - off
+operations:
+  receiveLightMeasurement:
+    action: receive
+    channel:
+      $ref: '#/channels/lightingMeasured'
+components:
+  schemas:
+    sentAt:
+      type: string
+      format: date-time
+      description: Date and time when the message was sent.

@@ -198,3 +198,81 @@ describe("fixtures (snapshot) — javascript/kafkajs", () => {
     expect(result).not.toContain("producer.send(");
   });
 });
+
+describe("fixtures (snapshot) — python/confluent-kafka", () => {
+  it("kafka.yaml — send operation resolves the topic override and message key", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("publishOrderCreated", "python", "confluent-kafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("from confluent_kafka import Producer");
+    expect(result).toContain("producer.produce(");
+    expect(result).toContain("order.events.v1");
+    expect(result).toContain('key="order-42"');
+    expect(result).not.toContain("group.id");
+  });
+
+  it("kafka.yaml — receive operation subscribes and polls, without producing", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("consumeOrderCreated", "python", "confluent-kafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("from confluent_kafka import Consumer");
+    expect(result).toContain("consumer.subscribe(");
+    expect(result).toContain('"group.id": "order-processing-service"');
+    expect(result).not.toContain("producer.produce(");
+  });
+});
+
+describe("fixtures (snapshot) — rust/rdkafka", () => {
+  it("kafka.yaml — send operation resolves the topic override and message key", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("publishOrderCreated", "rust", "rdkafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("FutureProducer");
+    expect(result).toContain("order.events.v1");
+    expect(result).toContain('.key("order-42")');
+    expect(result).not.toContain("StreamConsumer");
+  });
+
+  it("kafka.yaml — receive operation subscribes and streams, without producing", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("consumeOrderCreated", "rust", "rdkafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("StreamConsumer");
+    expect(result).toContain('.set("group.id", "order-processing-service")');
+    expect(result).not.toContain("FutureProducer");
+  });
+});
+
+describe("fixtures (snapshot) — go/kafka-go", () => {
+  it("kafka.yaml — send operation resolves the topic override and message key", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("publishOrderCreated", "go", "kafka-go");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("kafka.Writer");
+    expect(result).toContain("order.events.v1");
+    expect(result).toContain('message.Key = []byte("order-42")');
+    expect(result).not.toContain("kafka.NewReader");
+  });
+
+  it("kafka.yaml — receive operation reads, without writing", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("consumeOrderCreated", "go", "kafka-go");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("kafka.NewReader");
+    expect(result).toContain('GroupID: "order-processing-service"');
+    expect(result).not.toContain("WriteMessages");
+  });
+});
+
+describe("fixtures (snapshot) — schema-generated examples", () => {
+  it("schema-generated.yaml — kafka-secure server, no explicit bindings or examples, resolves entirely from protocol derivation + schema generation", () => {
+    const snippet = new AsyncSnippet(loadFixture("schema-generated.yaml"));
+    const result = snippet.convert("receiveLightMeasurement", "javascript", "kafkajs");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("generated from its schema");
+    expect(result).toContain('"lumens": 0');
+    expect(result).toContain('"sentAt": "2024-01-01T00:00:00Z"');
+    expect(result).toContain('"tags": [');
+    expect(result).toContain('"status": "on"');
+  });
+});

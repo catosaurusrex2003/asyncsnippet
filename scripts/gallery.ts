@@ -18,6 +18,7 @@ const cases: { file: string; operationId: string; protocol?: string }[] = [
   { file: "multi-message.yaml", operationId: "sendOrderCommand" },
   { file: "kafka.yaml", operationId: "publishOrderCreated", protocol: "kafka" },
   { file: "kafka.yaml", operationId: "consumeOrderCreated", protocol: "kafka" },
+  { file: "schema-generated.yaml", operationId: "receiveLightMeasurement", protocol: "kafka" },
 ];
 
 for (const { file, operationId, protocol } of cases) {

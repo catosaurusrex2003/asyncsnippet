@@ -32,7 +32,9 @@ export class MissingChannelError extends AsyncSnippetError {
 
 export class MissingBindingError extends AsyncSnippetError {
   constructor(operationId: string, protocol: string) {
-    super(`Operation "${operationId}" has no "${protocol}" channel binding`);
+    super(
+      `Operation "${operationId}" is not reachable over "${protocol}": no server it's associated with declares that protocol (or a secure variant of it), and its channel has no explicit "${protocol}" binding`,
+    );
     this.name = "MissingBindingError";
   }
 }
@@ -40,7 +42,7 @@ export class MissingBindingError extends AsyncSnippetError {
 export class MissingExampleError extends AsyncSnippetError {
   constructor(operationId: string) {
     super(
-      `Operation "${operationId}"'s message has no "examples" entry. asyncsnippet v1 requires an explicit example — it does not synthesize payloads from a JSON Schema.`,
+      `Operation "${operationId}"'s message has no "examples" entry, and no "payload" schema to generate one from (or its schema has no recognizable type — composition keywords like oneOf/anyOf/allOf aren't resolved into an example).`,
     );
     this.name = "MissingExampleError";
   }
