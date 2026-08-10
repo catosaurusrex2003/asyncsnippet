@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-10
+
 ### Added
 
 - Kafka clients for every existing target, not just `javascript`: `python`/`confluent-kafka` (librdkafka-backed), `rust`/`rdkafka` (Tokio async/await), `go`/`kafka-go` (pure Go, no cgo). Same producer/consumer semantics as `javascript`/`kafkajs` — topic override, message key, consumer `groupId`/`clientId` resolution. None of these change their target's default client (`python` stays `websockets`, `rust` stays `tokio-tungstenite`, `go` stays `gorilla`).
