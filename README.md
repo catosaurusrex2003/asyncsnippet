@@ -1,5 +1,9 @@
 # asyncsnippet
 
+[![npm version](https://img.shields.io/npm/v/asyncsnippet.svg)](https://www.npmjs.com/package/asyncsnippet)
+[![npm downloads](https://img.shields.io/npm/dm/asyncsnippet.svg)](https://www.npmjs.com/package/asyncsnippet)
+[![license](https://img.shields.io/npm/l/asyncsnippet.svg)](./LICENSE)
+
 Generates client code snippets from an [AsyncAPI](https://www.asyncapi.com/) operation across multiple protocol bindings (WebSocket, Kafka) — the async counterpart to [httpsnippet](https://github.com/readmeio/httpsnippet).
 
 Built specifically for internal use by [apiuikit](https://github.com/AceTheCreator/apiuikit).
@@ -21,8 +25,6 @@ Built specifically for internal use by [apiuikit](https://github.com/AceTheCreat
 ```sh
 npm install asyncsnippet
 ```
-
-[`asyncsnippet` on npm](https://www.npmjs.com/package/asyncsnippet)
 
 ## Usage
 
