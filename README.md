@@ -191,6 +191,20 @@ snippet.convert("publishOrderCreated", "rust", "rdkafka");
 snippet.convert("publishOrderCreated", "go", "kafka-go");
 ```
 
+### Agent Prompt
+
+Not a code snippet — a self-contained Markdown document (intro, every reachable server with its own authorization, the operation, and the raw payload/headers JSON Schema) meant for an LLM agent to read and act on directly, plus an explicit agent-facing intro sentence and step-by-step instructions.
+
+| `targetId` | `clientId` | Notes |
+| ---------- | ---------- | ----- |
+| `agent`    | `ws`       | **Default** for `agent`. For operations reachable over `ws`/`wss`. |
+| `agent`    | `kafka`    | For operations reachable over `kafka`/`kafka-secure`. |
+
+```js
+snippet.convert("sendMessage", "agent", "ws");
+snippet.convert("publishOrderCreated", "agent", "kafka");
+```
+
 ### Planned
 
 | Protocol          | Language | Client |
@@ -219,6 +233,9 @@ for (const target of getSupportedTargets()) {
 **Example output:**
 
 ```
+Agent Prompt (default: ws)
+  - Agent Prompt (WebSocket) [ws] (ws)
+  - Agent Prompt (Kafka) [kafka] (kafka)
 JavaScript (default: ws)
   - ws [ws] (ws)
   - WebSocket (browser) [ws] (websocket)
@@ -256,6 +273,8 @@ for (const target of getCompatibleTargets(document, "publishOrderCreated")) {
 **For a Kafka-only operation:**
 
 ```
+Agent Prompt (default: kafka)
+  - Agent Prompt (Kafka) (kafka)
 JavaScript (default: kafkajs)
   - kafkajs (kafkajs)
 Python (default: confluent-kafka)

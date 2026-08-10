@@ -107,6 +107,343 @@ socket.on('message', (data) => {
 });"
 `;
 
+exports[`fixtures (snapshot) — agent/kafka > kafka.yaml — receive operation includes consumer group id 1`] = `
+"# Order Events Service
+
+**Version:** 1.0.0
+
+You are an AI agent that needs to receive messages from an asynchronous (kafka) API operation ("consumeOrderCreated"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### production
+
+**Host:** \`broker1.example.com:9092,broker2.example.com:9092\`
+**Protocol:** kafka
+
+### RECEIVE \`consumeOrderCreated\`
+
+**Channel:** \`order-events\`
+**Kafka client ID:** \`order-service-consumer\`
+**Kafka consumer group ID:** \`order-processing-service\`
+**Kafka message key:** \`order-42\`
+
+#### consumeOrderCreated
+
+An order was created
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "orderId": {
+      "type": "string"
+    },
+    "total": {
+      "type": "number"
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Subscribe/listen on the channel/topic \`order.events.v1\` on the server described above, using the authorization details given (if any).
+2. Expect incoming messages conforming to the \`payload\` schema above."
+`;
+
+exports[`fixtures (snapshot) — agent/kafka > kafka.yaml — send operation includes kafka client id and message key 1`] = `
+"# Order Events Service
+
+**Version:** 1.0.0
+
+You are an AI agent that needs to send a message to an asynchronous (kafka) API operation ("publishOrderCreated"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### production
+
+**Host:** \`broker1.example.com:9092,broker2.example.com:9092\`
+**Protocol:** kafka
+
+### SEND \`publishOrderCreated\`
+
+**Channel:** \`order-events\`
+**Kafka client ID:** \`order-service-producer\`
+**Kafka message key:** \`order-42\`
+
+#### publishOrderCreated
+
+An order was created
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "orderId": {
+      "type": "string"
+    },
+    "total": {
+      "type": "number"
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Construct a JSON payload that conforms to the \`payload\` schema above.
+2. Send it to the channel/topic \`order.events.v1\` on the server described above, using the authorization details given (if any)."
+`;
+
+exports[`fixtures (snapshot) — agent/ws > pubsub.yaml — receive operation instructs to subscribe, not send 1`] = `
+"# Alerts Service
+
+**Version:** 1.0.0
+
+You are an AI agent that needs to receive messages from an asynchronous (ws) API operation ("subscribeToAlerts"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### production
+
+**Host:** \`alerts.example.com\`
+**Protocol:** wss
+
+### RECEIVE \`subscribeToAlerts\`
+
+**Channel:** \`/alerts\`
+**Query parameters:** \`region=<region>\`
+
+#### subscribeToAlerts
+
+An alert notification
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "severity": {
+      "type": "string"
+    },
+    "message": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Subscribe/listen on the channel/topic \`/alerts\` on the server described above, using the authorization details given (if any).
+2. Expect incoming messages conforming to the \`payload\` schema above.
+3. Some values above could not be resolved from the AsyncAPI document's \`default\`/\`examples\` and are placeholders — replace them with real values before acting:
+  - query param "region""
+`;
+
+exports[`fixtures (snapshot) — agent/ws > simple.yaml — send operation includes intro, server, payload schema, and instructions 1`] = `
+"# Ping Service
+
+**Version:** 1.0.0
+
+You are an AI agent that needs to send a message to an asynchronous (ws) API operation ("sendPing"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### production
+
+**Host:** \`ping.example.com\`
+**Protocol:** wss
+
+### SEND \`sendPing\`
+
+**Channel:** \`/ping\`
+
+#### sendPing
+
+A ping message
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "timestamp": {
+      "type": "number"
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Construct a JSON payload that conforms to the \`payload\` schema above.
+2. Send it to the channel/topic \`/ping\` on the server described above, using the authorization details given (if any)."
+`;
+
+exports[`fixtures (snapshot) — agent/ws > streetlights.yaml — multiple servers each get their own Authorization, message headers schema is shown, channel is unsubstituted 1`] = `
+"# Streetlights Kafka API
+
+**Version:** 1.0.0  
+**License:** Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0)
+
+The Smartylighting Streetlights API allows you to remotely manage the city lights.
+
+### Check out its awesome features:
+
+* Turn a specific streetlight on/off 🌃
+* Dim a specific streetlight 😎
+* Receive real-time information about environmental lighting conditions 📈
+
+
+You are an AI agent that needs to receive messages from an asynchronous (kafka) API operation ("receiveLightMeasurement"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### test
+
+**Host:** \`test.mykafkacluster.org:8092\`
+**Protocol:** kafka-secure
+Test broker
+
+**Authorization:**
+- **SASL/SCRAM-SHA-256**
+  Provide your username and password for SASL/SCRAM authentication
+
+### test_oauth
+
+**Host:** \`test.mykafkacluster.org:8093\`
+**Protocol:** kafka-secure
+Test port for oauth
+
+**Authorization:**
+- **OAuth2**
+  The oauth security descriptions
+  - Flow \`clientCredentials\`:
+    - Token URL: \`https://example.com/api/oauth/dialog\`
+    - Scopes: \`streetlights:read\`, \`streetlights:write\`
+
+### RECEIVE \`receiveLightMeasurement\`
+
+**Channel:** \`smartylighting.streetlights.1.0.event.{streetlightId}.lighting.measured\`
+**Kafka client ID:** \`<kafka clientId>\`
+**Kafka consumer group ID:** \`<kafka consumer group id>\`
+
+Inform about environmental lighting conditions of a particular streetlight.
+
+#### Light measured
+
+Environmental lighting conditions of a particular streetlight.
+
+Inform about environmental lighting conditions of a particular streetlight.
+
+**Content-Type:** \`application/json\`
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "lumens": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Light intensity measured in lumens."
+    },
+    "sentAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Date and time when the message was sent."
+    }
+  }
+}
+\`\`\`
+
+#### \`headers\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "my-app-header": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 100
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Subscribe/listen on the channel/topic \`smartylighting.streetlights.1.0.event.<streetlightId>.lighting.measured\` on the server described above, using the authorization details given (if any).
+2. Expect incoming messages conforming to the \`payload\` schema above.
+3. Some values above could not be resolved from the AsyncAPI document's \`default\`/\`examples\` and are placeholders — replace them with real values before acting:
+  - channel parameter "streetlightId"
+  - message payload (no explicit example — generated from its schema)
+  - kafka clientId
+  - kafka consumer group id"
+`;
+
+exports[`fixtures (snapshot) — agent/ws > with-security.yaml — server security resolves to an Authorization block under its server, describing API key + OAuth2 1`] = `
+"# Secure Chat Service
+
+**Version:** 2.0.0
+
+A chat service that requires an API key and OAuth2 to connect.
+
+You are an AI agent that needs to send a message to an asynchronous (ws) API operation ("sendMessage"). Use only the details below — do not invent field names, URLs, topics, or values that aren't given here.
+
+## Servers
+
+### production
+
+**Host:** \`secure-chat.example.com\`
+**Protocol:** wss
+
+**Authorization:**
+- **API key (in header: \`X-API-Key\`)**
+  A static API key issued per client.
+- **OAuth2**
+  OAuth2 client-credentials flow.
+  - Flow \`clientCredentials\`:
+    - Token URL: \`https://secure-chat.example.com/oauth/token\`
+    - Scopes: \`chat:write\`, \`chat:read\`
+
+### SEND \`sendMessage\`
+
+**Channel:** \`/rooms/{roomId}\`
+
+#### sendMessage
+
+A chat message
+
+#### \`payload\`
+
+\`\`\`json
+{
+  "type": "object",
+  "properties": {
+    "text": {
+      "type": "string"
+    }
+  }
+}
+\`\`\`
+
+## Instructions
+
+1. Construct a JSON payload that conforms to the \`payload\` schema above.
+2. Send it to the channel/topic \`/rooms/general\` on the server described above, using the authorization details given (if any)."
+`;
+
 exports[`fixtures (snapshot) — go/gorilla > pubsub.yaml — receive-only operation loops over ReadMessage without writing 1`] = `
 "// NOTE: some values could not be resolved from the AsyncAPI document's
 // default/examples and were filled with a placeholder — replace them

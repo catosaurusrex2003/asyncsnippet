@@ -28,7 +28,7 @@ The registry lives in [`src/targets/index.ts`](./src/targets/index.ts) and expos
 - `addTarget(target: Target): void` — registers a new language/platform. Throws if `target.info.key` is already registered.
 - `addTargetClient(targetId: string, client: Client): void` — registers a client under an already-registered target. Throws if the target doesn't exist yet, or if a client with the same key is already registered on it.
 
-Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `javascript/kafkajs`, `python/websockets`, `python/confluent-kafka`, `rust/tokio-tungstenite`, `rust/rdkafka`, `go/gorilla`, `go/kafka-go`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
+Built-in targets/clients (`javascript/ws`, `javascript/websocket`, `javascript/kafkajs`, `python/websockets`, `python/confluent-kafka`, `rust/tokio-tungstenite`, `rust/rdkafka`, `go/gorilla`, `go/kafka-go`, `agent/ws`, `agent/kafka`) are registered this same way at the bottom of `src/targets/index.ts` — that's the reference example to copy for a new one. Both functions are also exported from the package root (`import { addTarget, addTargetClient } from "asyncsnippet"`) for consumers who want to register their own target/client without forking the library.
 
 ### Contract
 
@@ -61,7 +61,7 @@ interface Target {
 }
 ```
 
-`convert()` receives a normalized [`Request`](./src/request.ts) (URL pieces, headers, query, payload, placeholders, send vs subscribe, plus protocol-specific fields like `serverHost` and `kafka`). Use [`CodeBuilder`](./src/helpers/code-builder.ts) to emit indented source, matching the existing [`javascript/ws`](./src/targets/javascript/ws/client.ts) client.
+`convert()` receives a normalized [`Request`](./src/request.ts) (URL pieces, headers, query, payload, placeholders, send vs subscribe, plus protocol-specific fields like `serverHost` and `kafka`, and documentation-oriented fields like `info`, `servers` (every reachable server with its own `security`), `operationSummary`/`operationDescription`, and the message's `title`/`summary`/`description`/`contentType`/`payloadSchema`/`headersSchema`). Use [`CodeBuilder`](./src/helpers/code-builder.ts) to emit indented source, matching the existing [`javascript/ws`](./src/targets/javascript/ws/client.ts) client. Output doesn't have to be a runnable snippet — the [`agent/ws`](./src/targets/agent/ws/client.ts) / [`agent/kafka`](./src/targets/agent/kafka/client.ts) clients use the same `Request`/`CodeBuilder` pattern to emit a Markdown prompt instead (shared template in [`src/targets/agent/markdown.ts`](./src/targets/agent/markdown.ts)).
 
 ### Steps
 

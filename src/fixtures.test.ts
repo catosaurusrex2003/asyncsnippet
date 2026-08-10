@@ -264,6 +264,78 @@ describe("fixtures (snapshot) — go/kafka-go", () => {
   });
 });
 
+describe("fixtures (snapshot) — agent/ws", () => {
+  it("simple.yaml — send operation includes intro, server, payload schema, and instructions", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "agent", "ws");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("# Ping Service");
+    expect(result).toContain("### SEND `sendPing`");
+    expect(result).toContain("**Host:** `ping.example.com`");
+    expect(result).toContain("**Protocol:** wss");
+    expect(result).toContain('"timestamp"');
+    expect(result).not.toContain("**Authorization:**");
+  });
+
+  it("with-security.yaml — server security resolves to an Authorization block under its server, describing API key + OAuth2", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-security.yaml"));
+    const result = snippet.convert("sendMessage", "agent", "ws");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("**Authorization:**");
+    expect(result).toContain("API key (in header: `X-API-Key`)");
+    expect(result).toContain("OAuth2");
+    expect(result).toContain("Token URL: `https://secure-chat.example.com/oauth/token`");
+    expect(result).toContain("`chat:write`, `chat:read`");
+  });
+
+  it("pubsub.yaml — receive operation instructs to subscribe, not send", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "agent", "ws");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("### RECEIVE `subscribeToAlerts`");
+    expect(result).toContain("Subscribe/listen on the channel/topic");
+    expect(result).toContain('query param "region"');
+  });
+
+  it("streetlights.yaml — multiple servers each get their own Authorization, message headers schema is shown, channel is unsubstituted", () => {
+    const snippet = new AsyncSnippet(loadFixture("streetlights.yaml"));
+    const result = snippet.convert("receiveLightMeasurement", "agent", "kafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain(
+      "**License:** Apache 2.0 (https://www.apache.org/licenses/LICENSE-2.0)",
+    );
+    expect(result).toContain("### test");
+    expect(result).toContain("### test_oauth");
+    expect(result).toContain("SASL/SCRAM-SHA-256");
+    expect(result).toContain("Token URL: `https://example.com/api/oauth/dialog`");
+    expect(result).toContain(
+      "`smartylighting.streetlights.1.0.event.{streetlightId}.lighting.measured`",
+    );
+    expect(result).toContain("#### `payload`");
+    expect(result).toContain("#### `headers`");
+    expect(result).toContain('"my-app-header"');
+  });
+});
+
+describe("fixtures (snapshot) — agent/kafka", () => {
+  it("kafka.yaml — send operation includes kafka client id and message key", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("publishOrderCreated", "agent", "kafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("**Kafka client ID:** `order-service-producer`");
+    expect(result).toContain("**Kafka message key:** `order-42`");
+    expect(result).toContain("order.events.v1");
+  });
+
+  it("kafka.yaml — receive operation includes consumer group id", () => {
+    const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
+    const result = snippet.convert("consumeOrderCreated", "agent", "kafka");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("**Kafka consumer group ID:** `order-processing-service`");
+    expect(result).toContain("Subscribe/listen on the channel/topic");
+  });
+});
+
 describe("fixtures (snapshot) — schema-generated examples", () => {
   it("schema-generated.yaml — kafka-secure server, no explicit bindings or examples, resolves entirely from protocol derivation + schema generation", () => {
     const snippet = new AsyncSnippet(loadFixture("schema-generated.yaml"));

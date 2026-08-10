@@ -1,0 +1,83 @@
+asyncapi: 3.0.0
+info:
+  title: Streetlights Kafka API
+  version: 1.0.0
+  description: |
+    The Smartylighting Streetlights API allows you to remotely manage the city lights.
+
+    ### Check out its awesome features:
+
+    * Turn a specific streetlight on/off 🌃
+    * Dim a specific streetlight 😎
+    * Receive real-time information about environmental lighting conditions 📈
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+servers:
+  test:
+    host: test.mykafkacluster.org:8092
+    protocol: kafka-secure
+    description: Test broker
+    security:
+      - $ref: '#/components/securitySchemes/saslScram'
+  test_oauth:
+    host: test.mykafkacluster.org:8093
+    protocol: kafka-secure
+    description: Test port for oauth
+    security:
+      - $ref: '#/components/securitySchemes/oauth2'
+channels:
+  lightingMeasured:
+    address: 'smartylighting.streetlights.1.0.event.{streetlightId}.lighting.measured'
+    parameters:
+      streetlightId:
+        description: The ID of the streetlight.
+    messages:
+      lightMeasured:
+        title: Light measured
+        summary: Environmental lighting conditions of a particular streetlight.
+        description: Inform about environmental lighting conditions of a particular streetlight.
+        contentType: application/json
+        payload:
+          type: object
+          properties:
+            lumens:
+              type: integer
+              minimum: 0
+              description: Light intensity measured in lumens.
+            sentAt:
+              $ref: '#/components/schemas/sentAt'
+        headers:
+          type: object
+          properties:
+            my-app-header:
+              type: integer
+              minimum: 0
+              maximum: 100
+operations:
+  receiveLightMeasurement:
+    action: receive
+    channel:
+      $ref: '#/channels/lightingMeasured'
+    description: Inform about environmental lighting conditions of a particular streetlight.
+    messages:
+      - $ref: '#/channels/lightingMeasured/messages/lightMeasured'
+components:
+  schemas:
+    sentAt:
+      type: string
+      format: date-time
+      description: Date and time when the message was sent.
+  securitySchemes:
+    saslScram:
+      type: scramSha256
+      description: Provide your username and password for SASL/SCRAM authentication
+    oauth2:
+      type: oauth2
+      description: The oauth security descriptions
+      flows:
+        clientCredentials:
+          tokenUrl: https://example.com/api/oauth/dialog
+          scopes:
+            'streetlights:read': Scopes to read streetlights
+            'streetlights:write': Scopes to write streetlights

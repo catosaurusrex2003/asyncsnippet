@@ -1,0 +1,54 @@
+asyncapi: 3.0.0
+info:
+  title: Secure Chat Service
+  version: 2.0.0
+  description: A chat service that requires an API key and OAuth2 to connect.
+servers:
+  production:
+    host: secure-chat.example.com
+    protocol: wss
+    security:
+      - $ref: '#/components/securitySchemes/apiKeyAuth'
+      - $ref: '#/components/securitySchemes/oauth2Auth'
+channels:
+  chatRoom:
+    address: '/rooms/{roomId}'
+    parameters:
+      roomId:
+        description: The chat room id
+        default: general
+    messages:
+      chatMessage:
+        summary: A chat message
+        payload:
+          type: object
+          properties:
+            text:
+              type: string
+        examples:
+          - name: sampleMessage
+            payload:
+              text: 'hello world'
+operations:
+  sendMessage:
+    action: send
+    channel:
+      $ref: '#/channels/chatRoom'
+    messages:
+      - $ref: '#/channels/chatRoom/messages/chatMessage'
+components:
+  securitySchemes:
+    apiKeyAuth:
+      type: httpApiKey
+      name: X-API-Key
+      in: header
+      description: A static API key issued per client.
+    oauth2Auth:
+      type: oauth2
+      description: OAuth2 client-credentials flow.
+      flows:
+        clientCredentials:
+          tokenUrl: https://secure-chat.example.com/oauth/token
+          scopes:
+            'chat:write': Send chat messages
+            'chat:read': Read chat messages

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-08-10
+
+### Added
+
+- `agent` target with `ws` (default) and `kafka` clients — not runnable code, but a self-contained Markdown prompt (intro, every reachable server with its own authorization, the operation, and raw payload/headers JSON Schema) meant for an LLM agent to read and act on. Registered first so pickers built on `getSupportedTargets()` / `getCompatibleTargets()` list and default to it ahead of code-sample targets.
+- Documentation-oriented fields on `Request`: `info`, `servers` (every reachable server with name/url/description and its own resolved `security`), `channelTemplate`, `operationSummary`/`operationDescription`, `security` (matched server), and richer `message` metadata (`title`/`summary`/`description`/`contentType`/`payloadSchema`/`headersSchema`).
+- AsyncAPI `SecurityScheme` typing plus `resolveServerSecurity` — fully derefs a server's `security` list against `components.securitySchemes` for human/agent-facing summaries.
+- Deep `$ref` resolution for payload/headers JSON Schema (`resolveSchemaDeep`) so agent prompts and callers can surface the full schema graph, not just leaf `$ref` pointers.
+- Fixtures covering security schemes and the streetlights example; snapshot coverage for agent prompts.
+
+### Changed
+
+- `Request` is additive for existing code clients — new fields are available to custom targets, but the built-in JavaScript/Python/Rust/Go clients are unchanged in emitted snippets.
+
 ## [0.2.0] - 2026-08-10
 
 ### Added
