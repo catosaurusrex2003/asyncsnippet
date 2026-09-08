@@ -14,6 +14,7 @@ import { kafkajs } from "./javascript/kafkajs/client.js";
 import { gorilla } from "./go/gorilla/client.js";
 import { kafkaGo } from "./go/kafka-go/client.js";
 import { ws } from "./javascript/ws/client.js";
+import { websocat } from "./shell/websocat/client.js";
 
 export interface ClientInfo {
   key: string;
@@ -151,3 +152,6 @@ addTargetClient("rust", rdkafka);
 addTarget({ info: { key: "go", title: "Go", default: "gorilla" }, clientsById: {} });
 addTargetClient("go", gorilla);
 addTargetClient("go", kafkaGo);
+
+addTarget({ info: { key: "shell", title: "Shell", default: "websocat" }, clientsById: {} });
+addTargetClient("shell", websocat);

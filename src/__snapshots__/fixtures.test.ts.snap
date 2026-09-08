@@ -1085,3 +1085,25 @@ async function main() {
 
 main();"
 `;
+
+exports[`fixtures (snapshot) — shell/websocat > pubsub.yaml — receive-only operation has no echo/pipe, shows example as a comment, and flags the unresolved query param 1`] = `
+"# NOTE: some values could not be resolved from the AsyncAPI document's
+# default/examples and were filled with a placeholder — replace them
+# with real values before running this snippet:
+#   - query param "region"
+
+# Example message shape for this operation ("sampleAlert"):
+# {
+#   "severity": "high",
+#   "message": "disk usage above threshold"
+# }
+
+websocat 'wss://alerts.example.com/alerts?region=%3Cregion%3E'"
+`;
+
+exports[`fixtures (snapshot) — shell/websocat > simple.yaml — send-only, no bindings 1`] = `"echo '{"timestamp":1735689600}' | websocat -n1 'wss://ping.example.com/ping'"`;
+
+exports[`fixtures (snapshot) — shell/websocat > with-bindings.yaml — query param and header both resolve 1`] = `
+"echo '{"text":"hello world","from":"alice"}' | websocat -n1 'wss://chat.example.com/rooms/general?token=abc123token' \\
+  -H='X-Client-Version: 1.0'"
+`;

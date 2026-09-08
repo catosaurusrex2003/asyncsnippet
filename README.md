@@ -166,6 +166,7 @@ A **target** is a language (`targetId`); a **client** is a concrete library or A
 | `python`     | `websockets`        | Python 3 (asyncio) | **Default** Python client. Requires [`websockets`](https://websockets.readthedocs.io/). |
 | `rust`       | `tokio-tungstenite` | Rust (Tokio)       | **Default** Rust client. Requires [`tokio-tungstenite`](https://github.com/snapview/tokio-tungstenite) (plus `futures-util`, `serde_json`). |
 | `go`         | `gorilla`           | Go                 | **Default** Go client. Requires [`gorilla/websocket`](https://github.com/gorilla/websocket). |
+| `shell`      | `websocat`          | Any (CLI)          | **Default** shell client. Requires [`websocat`](https://github.com/vi/websocat) — no code, just a command. |
 
 ### Kafka
 
@@ -185,6 +186,7 @@ snippet.convert("sendMessage", "javascript", "websocket");
 snippet.convert("sendMessage", "python", "websockets");
 snippet.convert("sendMessage", "rust", "tokio-tungstenite");
 snippet.convert("sendMessage", "go", "gorilla");
+snippet.convert("sendMessage", "shell", "websocat");
 
 // Kafka
 snippet.convert("publishOrderCreated", "javascript", "kafkajs");
@@ -251,6 +253,8 @@ Rust (default: tokio-tungstenite)
 Go (default: gorilla)
   - gorilla/websocket [ws] (gorilla)
   - kafka-go [kafka] (kafka-go)
+Shell (default: websocat)
+  - websocat [ws] (websocat)
 ```
 
 Each client's `protocol` is the AsyncAPI channel binding it generates for — `ws` or `kafka`. MQTT / AMQP / SSE won't appear until those clients exist.
