@@ -176,6 +176,34 @@ describe("fixtures (snapshot) — go/gorilla", () => {
   });
 });
 
+describe("fixtures (snapshot) — shell/websocat", () => {
+  it("simple.yaml — send-only, no bindings", () => {
+    const snippet = new AsyncSnippet(loadFixture("simple.yaml"));
+    const result = snippet.convert("sendPing", "shell", "websocat");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("websocat -n1");
+    expect(result).not.toContain("-H=");
+  });
+
+  it("with-bindings.yaml — query param and header both resolve", () => {
+    const snippet = new AsyncSnippet(loadFixture("with-bindings.yaml"));
+    const result = snippet.convert("sendMessage", "shell", "websocat");
+    expect(result).toMatchSnapshot();
+    expect(result).toContain("/rooms/general?token=abc123token");
+    expect(result).toContain("-H='X-Client-Version: 1.0'");
+  });
+
+  it("pubsub.yaml — receive-only operation has no echo/pipe, shows example as a comment, and flags the unresolved query param", () => {
+    const snippet = new AsyncSnippet(loadFixture("pubsub.yaml"));
+    const result = snippet.convert("subscribeToAlerts", "shell", "websocat");
+    expect(result).toMatchSnapshot();
+    expect(result).not.toContain("echo ");
+    expect(result).not.toContain("-n1");
+    expect(result).toContain("Example message shape");
+    expect(result).toContain('query param "region"');
+  });
+});
+
 describe("fixtures (snapshot) — javascript/kafkajs", () => {
   it("kafka.yaml — send operation resolves the topic override and message key", () => {
     const snippet = new AsyncSnippet(loadFixture("kafka.yaml"));
