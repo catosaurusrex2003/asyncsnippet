@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-08
+
 ### Added
 
 - `shell` target with a `websocat` client (default) — generates a runnable [`websocat`](https://github.com/vi/websocat) command line instead of code, for connecting to a `ws`/`wss` channel straight from a terminal or shell script. `send` operations pipe the message payload through `echo` with `-n1` (send-then-receive-one-message); `receive` operations emit a plain listening command with the example payload shown as a comment. Headers resolve to repeated `-H='Name: Value'` arguments.
